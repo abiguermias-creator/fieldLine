@@ -1,0 +1,5 @@
+# Fieldline
+
+A dispatch and work order system for a field service company.
+
+Setup instructions are in `docs/06-development-setup.md`.
