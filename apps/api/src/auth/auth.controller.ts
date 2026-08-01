@@ -9,6 +9,11 @@ import {
   loginUser,
 } from "./auth.service.js";
 
+import {
+  createAccessToken,
+  verifyToken,
+} from "../utils/jwt.js";
+
 
 export const register: RequestHandler = async (req, res) => {
   try {
@@ -35,7 +40,17 @@ export const login: RequestHandler = async (req, res) => {
 
     const result = await loginUser(data);
 
-    res.json(result);
+res.cookie("refreshToken", result.refreshToken, {
+  httpOnly: true,
+  secure: false,
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
+res.json({
+  user: result.user,
+  accessToken: result.accessToken,
+});
 
   } catch (error: any) {
     res.status(401).json({
@@ -82,6 +97,31 @@ export const me = async (
   } catch (error) {
     return res.status(500).json({
       message: "Server error",
+    });
+  }
+};
+
+export const refresh: RequestHandler = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        message: "No refresh token",
+      });
+    }
+
+    const decoded = verifyToken(refreshToken);
+
+    const newAccessToken = createAccessToken(decoded.userId);
+
+    return res.json({
+      accessToken: newAccessToken,
+    });
+
+  } catch {
+    return res.status(401).json({
+      message: "Invalid refresh token",
     });
   }
 };
