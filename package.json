@@ -1,5 +1,6 @@
 {
   "name": "fieldline",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -7,19 +8,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @fieldline/api\" \"npm run dev -w @fieldline/web\"",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "test": "npm run test --workspaces --if-present",
-    "db:migrate": "npm run db:migrate -w @fieldline/api",
-    "db:seed": "npm run db:seed -w @fieldline/api",
-    "db:studio": "npm run db:studio -w @fieldline/api",
-    "build": "npm run build -w @fieldline/shared && npm run build -w @fieldline/api && npm run build -w @fieldline/web"
+    "dev": "concurrently \"npm run dev -w @fieldline/api\" \"npm run dev -w @fieldline/web\"",
+    "build": "npm run build -ws",
+    "typecheck": "npm run typecheck -ws"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
-    "prettier": "^3.4.0",
     "typescript": "^5.7.0"
   }
 }
