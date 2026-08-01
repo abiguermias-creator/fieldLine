@@ -1,6 +1,9 @@
-import type { RequestHandler } from "express";
+import type { RequestHandler, Response } from "express";
 import type { AuthRequest } from "../middleware/auth.js";
+
+import { prisma } from "../db/client.js";
 import { registerSchema, loginSchema } from "./auth.schemas.js";
+
 import {
   registerUser,
   loginUser,
@@ -53,9 +56,32 @@ export const logout: RequestHandler = async (_req, res) => {
 
 export const me = async (
   req: AuthRequest,
-  res: any
+  res: Response
 ) => {
-  res.json({
-    user: req.user,
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user!.userId,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.json(user);
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
