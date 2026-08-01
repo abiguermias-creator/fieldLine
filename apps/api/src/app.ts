@@ -1,3 +1,5 @@
+import cookieParser from "cookie-parser";
+import authRoutes from "./auth/auth.routes.js";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -13,6 +15,7 @@ export function createApp() {
 
   app.use(helmet());
   app.use(express.json({ limit: "1mb" }));
+  app.use(cookieParser());
 
   app.use(
     cors({
@@ -22,11 +25,11 @@ export function createApp() {
   );
 
   app.use(
-    pinoHttp({
-      logger,
-      genReqId: () => ulid(),
-    })
-  );
+  (pinoHttp as any)({
+    logger,
+    genReqId: () => ulid(),
+  })
+);
 
   const healthHandler = async (_req: express.Request, res: express.Response) => {
     let database = "ok";
@@ -50,6 +53,6 @@ export function createApp() {
 
   // For Render health checks
   app.get("/health", healthHandler);
-
+  app.use("/api/auth", authRoutes);
   return app;
 }
