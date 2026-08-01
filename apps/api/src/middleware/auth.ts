@@ -1,19 +1,34 @@
-import type { Request, Response, NextFunction } from "express";
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import jwt from "jsonwebtoken";
+
 import { config } from "../lib/config.js";
 
+
 export interface AuthRequest extends Request {
+
   user?: {
     userId: string;
+    role: string;
   };
+
 }
+
+
 
 export function requireAuth(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers.authorization;
+
+  const authHeader =
+    req.headers.authorization;
+
 
   if (!authHeader) {
     return res.status(401).json({
@@ -21,7 +36,10 @@ export function requireAuth(
     });
   }
 
-  const token = authHeader.split(" ")[1];
+
+  const token =
+    authHeader.split(" ")[1];
+
 
   if (!token) {
     return res.status(401).json({
@@ -29,20 +47,31 @@ export function requireAuth(
     });
   }
 
+
   try {
-    const decoded = jwt.verify(
-      token,
-      config.JWT_SECRET
-    ) as {
-      userId: string;
-    };
+
+    const decoded =
+      jwt.verify(
+        token,
+        config.JWT_SECRET
+      ) as {
+        userId: string;
+        role: string;
+      };
+
 
     req.user = decoded;
 
+
     next();
+
+
   } catch {
+
     return res.status(401).json({
       message: "Invalid token",
     });
+
   }
+
 }

@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import { ulid } from "ulid";
+import testRoutes from "./test/test.routes.js";
 
 import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
@@ -54,5 +55,6 @@ export function createApp() {
   // For Render health checks
   app.get("/health", healthHandler);
   app.use("/api/auth", authRoutes);
+  app.use("/api/test", testRoutes);
   return app;
 }
