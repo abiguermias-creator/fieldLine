@@ -4,16 +4,27 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/*",
+    "apps/api",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w @fieldline/api\" \"npm run dev -w @fieldline/web\"",
-    "build": "npm run build -ws",
-    "typecheck": "npm run typecheck -ws"
+    "dev": "npm run build -w @fieldline/shared && concurrently -n api,web -c blue,green \"npm run dev -w @fieldline/api\" \"npm run dev -w @fieldline/web\"",
+    "dev:api": "npm run dev -w @fieldline/api",
+    "dev:web": "npm run dev -w @fieldline/web",
+    "dev:shared": "npm run dev -w @fieldline/shared",
+    "build": "npm run build -w @fieldline/shared && npm run build -w @fieldline/api && npm run build -w @fieldline/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @fieldline/api",
+    "db:seed": "npm run db:seed -w @fieldline/api",
+    "db:studio": "npm run db:studio -w @fieldline/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
+    "prettier": "^3.4.0",
     "typescript": "^5.7.0"
   }
 }
