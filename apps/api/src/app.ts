@@ -7,6 +7,9 @@ import pinoHttp from "pino-http";
 import { ulid } from "ulid";
 import testRoutes from "./test/test.routes.js";
 import protectedRoutes from "./auth/protected.routes.js";
+import workOrderRoutes from "./work-orders/work-order.routes.js";
+import clientRoutes from "./clients/client.routes.js";
+import siteRoutes from "./sites/site.routes.js";
 
 import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
@@ -58,6 +61,9 @@ export function createApp() {
   app.get("/health", healthHandler);
   app.use("/api/auth", authRoutes);
   app.use("/api/test", testRoutes);
+  app.use("/api/work-orders", workOrderRoutes);
+  app.use("/api/clients", clientRoutes);
+  app.use("/api/sites", siteRoutes);
   app.use("/api", protectedRoutes);
   return app;
 }

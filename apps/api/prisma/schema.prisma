@@ -19,7 +19,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  refreshTokens RefreshToken[]
+  refreshTokens     RefreshToken[]
+  technicianProfile TechnicianProfile?
 
   @@map("users")
 }
@@ -34,6 +35,106 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model Client {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  email       String?  @db.Citext
+  phone       String?
+  address     String?
+  contactName String?  @map("contact_name")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sites      Site[]
+  workOrders WorkOrder[]
+
+  @@map("clients")
+}
+
+model Site {
+  id        String   @id @default(uuid()) @db.Uuid
+  clientId  String   @map("client_id") @db.Uuid
+  name      String
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrders WorkOrder[]
+
+  @@map("sites")
+}
+
+model Skill {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("skills")
+}
+
+model TechnicianProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  phone     String?
+  bio       String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workOrders WorkOrder[]
+
+  @@map("technician_profiles")
+}
+
+model Equipment {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  description  String?
+  serialNumber String?  @unique @map("serial_number")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("equipment")
+}
+
+model WorkOrder {
+  id           String            @id @default(uuid()) @db.Uuid
+  clientId     String            @map("client_id") @db.Uuid
+  siteId       String            @map("site_id") @db.Uuid
+  technicianId String?           @map("technician_id") @db.Uuid
+  title        String
+  description  String?
+  status       WorkOrderStatus   @default(OPEN)
+  priority     WorkOrderPriority @default(MEDIUM)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  client     Client             @relation(fields: [clientId], references: [id])
+  site       Site               @relation(fields: [siteId], references: [id])
+  technician TechnicianProfile? @relation(fields: [technicianId], references: [id])
+
+  @@map("work_orders")
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WorkOrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum UserRole {

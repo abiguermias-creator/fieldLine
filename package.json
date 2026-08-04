@@ -23,6 +23,7 @@
     "db:studio": "npm run db:studio -w @fieldline/api"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "concurrently": "^9.1.0",
     "prettier": "^3.4.0",
     "typescript": "^5.7.0"
