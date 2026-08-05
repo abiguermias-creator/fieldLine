@@ -1,6 +1,7 @@
 import argon2 from "argon2";
 
 import { prisma } from "../db/client.js";
+import { config } from "../lib/config.js";
 import {
   createAccessToken,
   createRefreshToken,
@@ -36,7 +37,7 @@ export async function registerUser(data: RegisterInput) {
       email: data.email,
       passwordHash,
       fullName: data.fullName,
-      role: data.role,
+      role: "CLIENT",
     },
   });
 
@@ -48,8 +49,6 @@ export async function registerUser(data: RegisterInput) {
     role: user.role,
   };
 }
-
-
 
 export async function loginUser(data: LoginInput) {
 
@@ -64,9 +63,6 @@ export async function loginUser(data: LoginInput) {
   throw new Error("Email or password is incorrect");
 }
 
-if (!user.isActive) {
-  throw new Error("This account is not active");
-}
 
   const passwordValid = await argon2.verify(
     user.passwordHash,
@@ -78,6 +74,9 @@ if (!user.isActive) {
   throw new Error("Email or password is incorrect");
 }
 
+if (!user.isActive) {
+  throw new Error("This account is not active");
+}
 
   const accessToken = createAccessToken(
     user.id,
@@ -92,14 +91,19 @@ if (!user.isActive) {
 
 
   await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ),
-    },
-  });
+  data: {
+    token: refreshToken,
+    userId: user.id,
+    expiresAt: new Date(
+      Date.now() +
+      config.REFRESH_TOKEN_DAYS *
+      24 *
+      60 *
+      60 *
+      1000
+    ),
+  },
+});
 
   await prisma.user.update({
   where: {
@@ -121,8 +125,6 @@ if (!user.isActive) {
     refreshToken,
   };
 }
-
-
 
 export async function refreshAccessToken(
   refreshToken: string
@@ -165,8 +167,6 @@ export async function refreshAccessToken(
 
   return newAccessToken;
 }
-
-
 
 export async function logoutUser(
   refreshToken: string

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from 'contexts/AuthContext';
 
 // material-ui
@@ -27,29 +27,27 @@ import AnimateButton from 'components/@extended/AnimateButton';
 // assets
 import { EyeOutlined } from "@ant-design/icons";
 import { EyeInvisibleOutlined } from "@ant-design/icons";
-import { useLocation } from "react-router-dom";
 
 // ============================|| JWT - LOGIN ||============================ //
 
-export default function AuthLogin({ isDemo = false }) {
+export default function AuthLogin({ isDemo = false }) { 
   const navigate = useNavigate();
+const location = useLocation();
+const sessionExpired =
+  new URLSearchParams(location.search).get("session");
   const { login } = useAuth();
   const [errorMessage, setErrorMessage] = React.useState("");
   const [checked, setChecked] = React.useState(false);
 
   const [showPassword, setShowPassword] = React.useState(false);
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-    const location = useLocation();
 
-const sessionExpired =
-new URLSearchParams(location.search)
-.get("session");
-  };
+const handleClickShowPassword = () => {
+  setShowPassword(!showPassword);
+};
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
+const handleMouseDownPassword = (event) => {
+  event.preventDefault();
+};
 
   return (
     <>
@@ -74,20 +72,21 @@ new URLSearchParams(location.search)
       email: values.email,
       password: values.password,
     });
+    const from = location.state?.from?.pathname;
 
    const role = data.user.role;
 
 if (role === "DISPATCHER") {
-  navigate("/dashboard/default");
+  navigate(from || "/dashboard/default");
 } 
 else if (role === "TECHNICIAN") {
-  navigate("/dashboard/default");
+  navigate(from || "/dashboard/default");
 } 
 else if (role === "SUPERVISOR") {
-  navigate("/dashboard/default");
+  navigate(from || "/dashboard/default");
 } 
 else if (role === "CLIENT") {
-  navigate("/dashboard/default");
+  navigate(from || "/dashboard/default");
 } 
 
   } catch (error) {
@@ -182,6 +181,13 @@ else if (role === "CLIENT") {
   <Grid size={12}>
     <FormHelperText error>
       {errorMessage}
+    </FormHelperText>
+  </Grid>
+)}
+{sessionExpired && (
+  <Grid size={12}>
+    <FormHelperText error>
+      Your session has ended. Please login again.
     </FormHelperText>
   </Grid>
 )}

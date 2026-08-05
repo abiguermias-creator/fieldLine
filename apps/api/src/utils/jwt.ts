@@ -12,7 +12,7 @@ export function createAccessToken(
     },
     config.JWT_SECRET,
     {
-      expiresIn: "30s",
+      expiresIn: `${config.ACCESS_TOKEN_MINUTES}m`,
     }
   );
 }
@@ -29,7 +29,7 @@ export function createRefreshToken(
     },
     config.JWT_SECRET,
     {
-      expiresIn: "2m",
+      expiresIn: `${config.REFRESH_TOKEN_DAYS}d`,
     }
   );
 }

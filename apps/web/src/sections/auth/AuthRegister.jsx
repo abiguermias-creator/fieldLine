@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -28,12 +28,12 @@ import { strengthColor, strengthIndicator } from 'utils/password-strength';
 import { EyeOutlined } from "@ant-design/icons";
 import { EyeInvisibleOutlined } from "@ant-design/icons";
 import { useAuth } from 'contexts/AuthContext';
-import React from 'react';
 
 // ============================|| JWT - REGISTER ||============================ //
 
 export default function AuthRegister() {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState("");
   const [level, setLevel] = useState();
   const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +70,7 @@ export default function AuthRegister() {
         `${values.firstname} ${values.lastname}`
     });
 
-window.location.href="/dashboard/default";
+navigate("/dashboard/default");
   } catch(error) {
 
     setErrorMessage(

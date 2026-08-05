@@ -15,6 +15,8 @@ import {
   logoutUser,
 } from "./auth.service.js";
 
+import { config } from "../lib/config.js";
+
 
 export const register: RequestHandler = async (req, res) => {
   try {
@@ -34,7 +36,12 @@ export const register: RequestHandler = async (req, res) => {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 2 * 60 * 1000,
+        maxAge:
+  config.REFRESH_TOKEN_DAYS *
+  24 *
+  60 *
+  60 *
+  1000,
       }
     );
 
@@ -74,7 +81,12 @@ export const login: RequestHandler = async (req, res) => {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 2 * 60 * 1000,
+        maxAge:
+  config.REFRESH_TOKEN_DAYS *
+  24 *
+  60 *
+  60 *
+  1000,
       }
     );
 

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { goTo } from "../utils/navigation";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -25,8 +26,6 @@ api.interceptors.request.use((config)=>{
  return config;
 
 });
-
-
 
 // refresh expired token
 api.interceptors.response.use(
@@ -81,7 +80,7 @@ localStorage.removeItem(
 );
 
 
-window.location.href="/login?session=expired";
+goTo("/free/login?session=expired");
 
 
 return Promise.reject(refreshError);
