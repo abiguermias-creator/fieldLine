@@ -1,6 +1,7 @@
 import argon2 from "argon2";
 
 import { prisma } from "../db/client.js";
+import { config } from "../lib/config.js";
 import {
   createAccessToken,
   createRefreshToken,
@@ -22,8 +23,8 @@ export async function registerUser(data: RegisterInput) {
   });
 
   if (existingUser) {
-    throw new Error("Email already exists");
-  }
+  throw new Error("An account with this email already exists.");
+}
 
 
   const passwordHash = await argon2.hash(
@@ -36,7 +37,7 @@ export async function registerUser(data: RegisterInput) {
       email: data.email,
       passwordHash,
       fullName: data.fullName,
-      role: data.role,
+      role: "CLIENT",
     },
   });
 
@@ -49,8 +50,6 @@ export async function registerUser(data: RegisterInput) {
   };
 }
 
-
-
 export async function loginUser(data: LoginInput) {
 
   const user = await prisma.user.findUnique({
@@ -61,8 +60,8 @@ export async function loginUser(data: LoginInput) {
 
 
   if (!user) {
-    throw new Error("Invalid credentials");
-  }
+  throw new Error("Email or password is incorrect");
+}
 
 
   const passwordValid = await argon2.verify(
@@ -72,9 +71,12 @@ export async function loginUser(data: LoginInput) {
 
 
   if (!passwordValid) {
-    throw new Error("Invalid credentials");
-  }
+  throw new Error("Email or password is incorrect");
+}
 
+if (!user.isActive) {
+  throw new Error("This account is not active");
+}
 
   const accessToken = createAccessToken(
     user.id,
@@ -89,15 +91,28 @@ export async function loginUser(data: LoginInput) {
 
 
   await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ),
-    },
-  });
+  data: {
+    token: refreshToken,
+    userId: user.id,
+    expiresAt: new Date(
+      Date.now() +
+      config.REFRESH_TOKEN_DAYS *
+      24 *
+      60 *
+      60 *
+      1000
+    ),
+  },
+});
 
+  await prisma.user.update({
+  where: {
+    id: user.id,
+  },
+  data: {
+    lastLoginAt: new Date(),
+  },
+});
 
   return {
     user: {
@@ -110,8 +125,6 @@ export async function loginUser(data: LoginInput) {
     refreshToken,
   };
 }
-
-
 
 export async function refreshAccessToken(
   refreshToken: string
@@ -154,8 +167,6 @@ export async function refreshAccessToken(
 
   return newAccessToken;
 }
-
-
 
 export async function logoutUser(
   refreshToken: string

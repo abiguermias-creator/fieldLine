@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from 'contexts/AuthContext';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -29,36 +30,76 @@ import { EyeInvisibleOutlined } from "@ant-design/icons";
 
 // ============================|| JWT - LOGIN ||============================ //
 
-export default function AuthLogin({ isDemo = false }) {
+export default function AuthLogin({ isDemo = false }) { 
+  const navigate = useNavigate();
+const location = useLocation();
+const sessionExpired =
+  new URLSearchParams(location.search).get("session");
+  const { login } = useAuth();
+  const [errorMessage, setErrorMessage] = React.useState("");
   const [checked, setChecked] = React.useState(false);
 
   const [showPassword, setShowPassword] = React.useState(false);
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
+const handleClickShowPassword = () => {
+  setShowPassword(!showPassword);
+};
+
+const handleMouseDownPassword = (event) => {
+  event.preventDefault();
+};
 
   return (
     <>
       <Formik
-        initialValues={{
-          email: 'info@codedthemes.com',
-          password: '123456',
-          submit: null
-        }}
+ initialValues={{
+   email: '',
+   password: '',
+   submit: null
+ }}
         validationSchema={Yup.object().shape({
           email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           password: Yup.string()
             .required('Password is required')
             .test('no-leading-trailing-whitespace', 'Password cannot start or end with spaces', (value) => value === value.trim())
-            .max(10, 'Password must be less than 10 characters')
+            .min(10, 'Password must be at least 10 characters')
         })}
+        onSubmit={async (values, { setSubmitting }) => {
+  try {
+    setErrorMessage("");
+
+    const data = await login({
+      email: values.email,
+      password: values.password,
+    });
+    const from = location.state?.from?.pathname;
+
+   const role = data.user.role;
+
+if (role === "DISPATCHER") {
+  navigate(from || "/dashboard/default");
+} 
+else if (role === "TECHNICIAN") {
+  navigate(from || "/dashboard/default");
+} 
+else if (role === "SUPERVISOR") {
+  navigate(from || "/dashboard/default");
+} 
+else if (role === "CLIENT") {
+  navigate(from || "/dashboard/default");
+} 
+
+  } catch (error) {
+    setErrorMessage(
+      error.response?.data?.message ?? "Login failed"
+    );
+  } finally {
+    setSubmitting(false);
+  }
+}}
       >
-        {({ errors, handleBlur, handleChange, touched, values }) => (
-          <form noValidate>
+        {({ errors, handleBlur, handleChange, touched, values, handleSubmit }) => (
+            <form noValidate onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid size={12}>
                 <Stack sx={{ gap: 1 }}>
@@ -136,9 +177,29 @@ export default function AuthLogin({ isDemo = false }) {
               </Grid>
               <Grid size={12}>
                 <AnimateButton>
-                  <Button fullWidth size="large" variant="contained" color="primary">
-                    Login
-                  </Button>
+                  {errorMessage && (
+  <Grid size={12}>
+    <FormHelperText error>
+      {errorMessage}
+    </FormHelperText>
+  </Grid>
+)}
+{sessionExpired && (
+  <Grid size={12}>
+    <FormHelperText error>
+      Your session has ended. Please login again.
+    </FormHelperText>
+  </Grid>
+)}
+                  <Button
+                    type="submit"
+                    fullWidth
+                    size="large"
+                    variant="contained"
+                    color="primary"
+>
+                   Login
+        </Button>
                 </AnimateButton>
               </Grid>
             </Grid>

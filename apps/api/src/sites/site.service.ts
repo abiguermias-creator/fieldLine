@@ -3,7 +3,7 @@ import { prisma } from "../db/client.js";
 export async function createSite(data: {
   clientId: string;
   name: string;
-  address?: string;
+  address: string;
 }) {
   return prisma.site.create({
     data,

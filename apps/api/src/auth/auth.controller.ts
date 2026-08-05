@@ -1,5 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../middleware/auth.js";
+import { prisma } from "../db/client.js";
+import { ZodError } from "zod";
 
 import {
   registerSchema,
@@ -13,6 +15,8 @@ import {
   logoutUser,
 } from "./auth.service.js";
 
+import { config } from "../lib/config.js";
+
 
 export const register: RequestHandler = async (req, res) => {
   try {
@@ -20,20 +24,49 @@ export const register: RequestHandler = async (req, res) => {
 
     const user = await registerUser(data);
 
+    const result = await loginUser({
+      email: data.email,
+      password: data.password,
+    });
+
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge:
+  config.REFRESH_TOKEN_DAYS *
+  24 *
+  60 *
+  60 *
+  1000,
+      }
+    );
+
     res.status(201).json({
       message: "User registered successfully",
-      user,
+      user: result.user,
+      accessToken: result.accessToken,
     });
 
   } catch (error: any) {
-    res.status(400).json({
+
+    if (error instanceof ZodError) {
+      const firstError = error.errors[0];
+
+      return res.status(400).json({
+        message: firstError?.message ?? "Invalid input",
+        field: firstError?.path[0] ?? null,
+      });
+    }
+
+    return res.status(400).json({
       message: error.message,
     });
   }
 };
-
-
-
 export const login: RequestHandler = async (req, res) => {
   try {
     const data = loginSchema.parse(req.body);
@@ -48,7 +81,12 @@ export const login: RequestHandler = async (req, res) => {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge:
+  config.REFRESH_TOKEN_DAYS *
+  24 *
+  60 *
+  60 *
+  1000,
       }
     );
 
@@ -132,9 +170,40 @@ export const me = async (
   req: AuthRequest,
   res: any
 ) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
 
-  res.json({
-    user: req.user,
-  });
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.userId,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
 
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    res.json({
+      user: {
+        ...user,
+        clientCompanyId: null,
+      },
+    });
+  } catch {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 };
