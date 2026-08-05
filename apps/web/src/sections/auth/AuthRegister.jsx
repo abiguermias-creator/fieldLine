@@ -27,10 +27,14 @@ import { strengthColor, strengthIndicator } from 'utils/password-strength';
 // assets
 import { EyeOutlined } from "@ant-design/icons";
 import { EyeInvisibleOutlined } from "@ant-design/icons";
+import { useAuth } from 'contexts/AuthContext';
+import React from 'react';
 
 // ============================|| JWT - REGISTER ||============================ //
 
 export default function AuthRegister() {
+  const { register } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
   const [level, setLevel] = useState();
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => {
@@ -53,6 +57,32 @@ export default function AuthRegister() {
   return (
     <>
       <Formik
+      onSubmit={async (values, { setSubmitting }) => {
+
+  try {
+
+    setErrorMessage("");
+
+    await register({
+      email: values.email,
+      password: values.password,
+      fullName:
+        `${values.firstname} ${values.lastname}`
+    });
+
+window.location.href="/dashboard/default";
+  } catch(error) {
+
+    setErrorMessage(
+      error.response?.data?.message ??
+      "Registration failed"
+    );
+
+  }
+finally{
+setSubmitting(false);
+}
+}}
         initialValues={{
           firstname: '',
           lastname: '',
@@ -68,11 +98,11 @@ export default function AuthRegister() {
           password: Yup.string()
             .required('Password is required')
             .test('no-leading-trailing-whitespace', 'Password cannot start or end with spaces', (value) => value === value.trim())
-            .max(10, 'Password must be less than 10 characters')
+            .min(10, 'Password must be at least 10 characters')
         })}
       >
-        {({ errors, handleBlur, handleChange, touched, values }) => (
-          <form noValidate>
+        {({ errors, handleBlur, handleChange, touched, values, handleSubmit }) => (
+          <form noValidate onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack sx={{ gap: 1 }}>
@@ -218,18 +248,42 @@ export default function AuthRegister() {
                   </Link>
                 </Typography>
               </Grid>
-              {errors.submit && (
-                <Grid size={12}>
-                  <FormHelperText error>{errors.submit}</FormHelperText>
-                </Grid>
-              )}
-              <Grid size={12}>
-                <AnimateButton>
-                  <Button fullWidth size="large" variant="contained" color="primary">
-                    Create Account
-                  </Button>
-                </AnimateButton>
-              </Grid>
+              {errorMessage && (
+  <Grid size={12}>
+    <FormHelperText error>
+      {errorMessage}
+    </FormHelperText>
+  </Grid>
+)}
+          {errors.submit && (
+  <Grid size={12}>
+    <FormHelperText error>
+      {errors.submit}
+    </FormHelperText>
+  </Grid>
+)}
+
+{errorMessage && (
+  <Grid size={12}>
+    <FormHelperText error>
+      {errorMessage}
+    </FormHelperText>
+  </Grid>
+)}
+
+<Grid size={12}>
+  <AnimateButton>
+    <Button
+      type="submit"
+      fullWidth
+      size="large"
+      variant="contained"
+      color="primary"
+    >
+      Create Account
+    </Button>
+  </AnimateButton>
+</Grid>
             </Grid>
           </form>
         )}

@@ -22,8 +22,8 @@ export async function registerUser(data: RegisterInput) {
   });
 
   if (existingUser) {
-    throw new Error("Email already exists");
-  }
+  throw new Error("An account with this email already exists.");
+}
 
 
   const passwordHash = await argon2.hash(
@@ -61,9 +61,12 @@ export async function loginUser(data: LoginInput) {
 
 
   if (!user) {
-    throw new Error("Invalid credentials");
-  }
+  throw new Error("Email or password is incorrect");
+}
 
+if (!user.isActive) {
+  throw new Error("This account is not active");
+}
 
   const passwordValid = await argon2.verify(
     user.passwordHash,
@@ -72,8 +75,8 @@ export async function loginUser(data: LoginInput) {
 
 
   if (!passwordValid) {
-    throw new Error("Invalid credentials");
-  }
+  throw new Error("Email or password is incorrect");
+}
 
 
   const accessToken = createAccessToken(
@@ -98,6 +101,14 @@ export async function loginUser(data: LoginInput) {
     },
   });
 
+  await prisma.user.update({
+  where: {
+    id: user.id,
+  },
+  data: {
+    lastLoginAt: new Date(),
+  },
+});
 
   return {
     user: {
