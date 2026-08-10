@@ -1,22 +1,72 @@
 import { Router } from "express";
+
 import {
   createClientController,
-  deleteClientController,
-  getClientController,
   getClientsController,
+  getClientController,
   updateClientController,
+  deleteClientController,
+  deactivateClientController,
+  activateClientController,
 } from "./client.controller.js";
+
+import {
+  requireAuth,
+  requireRole,
+} from "../middleware/auth.js";
 
 const router = Router();
 
-router.post("/", createClientController);
+const canManageClients = requireRole(
+  "DISPATCHER",
+  "SUPERVISOR"
+);
 
-router.get("/", getClientsController);
+router.get(
+  "/",
+  requireAuth,
+  getClientsController
+);
 
-router.get("/:id", getClientController);
+router.get(
+  "/:id",
+  requireAuth,
+  getClientController
+);
 
-router.patch("/:id", updateClientController);
+router.post(
+  "/",
+  requireAuth,
+  canManageClients,
+  createClientController
+);
 
-router.delete("/:id", deleteClientController);
+router.patch(
+  "/:id",
+  requireAuth,
+  canManageClients,
+  updateClientController
+);
+
+router.delete(
+  "/:id",
+  requireAuth,
+  canManageClients,
+  deleteClientController
+);
+
+router.patch(
+  "/:id/activate",
+  requireAuth,
+  canManageClients,
+  activateClientController
+);
+
+router.patch(
+  "/:id/deactivate",
+  requireAuth,
+  canManageClients,
+  deactivateClientController
+);
 
 export default router;

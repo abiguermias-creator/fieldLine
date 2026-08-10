@@ -6,7 +6,7 @@ export const createWorkOrderSchema = z.object({
   title: z.string().min(2),
   description: z.string().optional(),
   priority: z
-    .enum(["LOW", "MEDIUM", "HIGH", "URGENT"])
+    .enum(["LOW", "MEDIUM", "HIGH"])
     .optional(),
 });
 
@@ -23,7 +23,7 @@ export const updateWorkOrderSchema = z.object({
     ])
     .optional(),
   priority: z
-    .enum(["LOW", "MEDIUM", "HIGH", "URGENT"])
+    .enum(["LOW", "MEDIUM", "HIGH"])
     .optional(),
 });
 

@@ -2,18 +2,29 @@ import { Request, Response } from "express";
 import {
   createSite,
   deleteSite,
+  deactivateSite,
   getSiteById,
   getSites,
   updateSite,
+  updateSiteLocation,
 } from "./site.service.js";
+
 import {
   createSiteSchema,
   updateSiteSchema,
+  siteIdSchema,
+  siteLocationSchema,
 } from "./site.schemas.js";
+
+import type
+ { AuthRequest } 
+ from "../middleware/auth.js";
+
 
 type SiteParams = {
   id: string;
 };
+
 
 export async function createSiteController(
   req: Request,
@@ -26,20 +37,26 @@ export async function createSiteController(
   res.status(201).json(site);
 }
 
+
+
 export async function getSitesController(
-  _req: Request,
+  req: AuthRequest,
   res: Response
 ) {
-  const sites = await getSites();
+  const sites = await getSites(req.user);
 
   res.json(sites);
 }
+
+
 
 export async function getSiteController(
   req: Request<SiteParams>,
   res: Response
 ) {
-  const site = await getSiteById(req.params.id);
+  const site = await getSiteById(
+    req.params.id
+  );
 
   if (!site) {
     return res.status(404).json({
@@ -50,22 +67,80 @@ export async function getSiteController(
   res.json(site);
 }
 
+
+
 export async function updateSiteController(
   req: Request<SiteParams>,
   res: Response
 ) {
-  const data = updateSiteSchema.parse(req.body);
+  const data = updateSiteSchema.parse(
+    req.body
+  );
 
-  const site = await updateSite(req.params.id, data);
+  const site = await updateSite(
+    req.params.id,
+    data
+  );
 
   res.json(site);
 }
+
+
 
 export async function deleteSiteController(
   req: Request<SiteParams>,
   res: Response
 ) {
-  const site = await deleteSite(req.params.id);
 
-  res.status(200).json(site);
+  try {
+
+    const site = await deleteSite(
+      req.params.id
+    );
+
+    res.status(200).json(site);
+
+  } catch(error:any){
+
+    res.status(400).json({
+      message:error.message,
+    });
+
+  }
+
+}
+
+
+
+export async function deactivateSiteController(
+  req: Request<SiteParams>,
+  res: Response
+) {
+
+  const site = await deactivateSite(
+    req.params.id
+  );
+
+  res.json(site);
+
+}
+
+export async function updateSiteLocationController(
+  req: Request,
+  res: Response
+) {
+  const { id } = siteIdSchema.parse(req.params);
+
+  const { latitude, longitude } =
+    siteLocationSchema.parse(req.body);
+
+  const site = await updateSiteLocation(
+    id,
+    {
+      latitude,
+      longitude,
+    }
+  );
+
+  res.json(site);
 }

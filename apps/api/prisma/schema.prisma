@@ -18,11 +18,15 @@ model User {
   isActive     Boolean   @default(true) @map("is_active")
   lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
 
+  clientId String? @map("client_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   refreshTokens     RefreshToken[]
   technicianProfile TechnicianProfile?
+
+  client Client? @relation(fields: [clientId], references: [id])
 
   @@map("users")
 }
@@ -52,6 +56,7 @@ model Client {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  users      User[]
   sites      Site[]
   workOrders WorkOrder[]
 
@@ -72,6 +77,9 @@ model Site {
   latitude  Float?
   longitude Float?
 
+  coordinatesManual    Boolean @default(false) @map("coordinates_manual")
+  needsManualPlacement Boolean @default(false) @map("needs_manual_placement")
+
   isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -82,6 +90,20 @@ model Site {
   workOrders WorkOrder[]
 
   @@map("sites")
+}
+
+model GeocodeCache {
+  id        String  @id @default(uuid()) @db.Uuid
+  address   String
+  city      String?
+  latitude  Float
+  longitude Float
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([address, city])
+  @@map("geocode_cache")
 }
 
 model Skill {
@@ -151,7 +173,6 @@ enum WorkOrderPriority {
   LOW
   MEDIUM
   HIGH
-  URGENT
 }
 
 enum UserRole {
