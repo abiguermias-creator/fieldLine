@@ -1,11 +1,20 @@
 import { prisma } from "../db/client.js";
 
+type WorkOrderPriority = "LOW" | "MEDIUM" | "HIGH";
+
+type WorkOrderStatus =
+  | "OPEN"
+  | "ASSIGNED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+
 export async function createWorkOrder(data: {
   clientId: string;
   siteId: string;
   title: string;
   description?: string;
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  priority?: WorkOrderPriority;
 }) {
   return prisma.workOrder.create({
     data: {
@@ -21,7 +30,7 @@ export async function createWorkOrder(data: {
 export async function getWorkOrders(query: {
   page: number;
   limit: number;
-  status?: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status?: WorkOrderStatus;
   sort: "createdAt" | "priority";
 }) {
   const skip = (query.page - 1) * query.limit;
@@ -72,13 +81,8 @@ export async function updateWorkOrder(
   data: {
     title?: string;
     description?: string;
-    status?:
-      | "OPEN"
-      | "ASSIGNED"
-      | "IN_PROGRESS"
-      | "COMPLETED"
-      | "CANCELLED";
-    priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+    status?: WorkOrderStatus;
+    priority?: WorkOrderPriority;
   }
 ) {
   return prisma.workOrder.update({

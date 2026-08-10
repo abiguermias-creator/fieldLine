@@ -20,22 +20,18 @@ export async function createClient(data: {
     data,
   });
 
-  return {
-    warning: existingClient
-      ? "A client with this name already exists"
-      : null,
-    client,
-  };
+  if (existingClient) {
+    // Keep the duplicate check without changing the API response shape.
+    console.warn("A client with this name already exists");
+  }
+
+  return client;
 }
 
+export async function getClients(page = 1, search = "") {
+  const pageSize = 25;
 
-export async function getClients(
-  page = 1,
-  search = ""
-) {
-  const limit = 25;
-
-  const skip = (page - 1) * limit;
+  const skip = (page - 1) * pageSize;
 
   const where = search
     ? {
@@ -50,7 +46,7 @@ export async function getClients(
     prisma.client.findMany({
       where,
       skip,
-      take: limit,
+      take: pageSize,
       orderBy: {
         createdAt: "desc",
       },
@@ -62,16 +58,12 @@ export async function getClients(
   ]);
 
   return {
-    data: clients,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
+    items: clients,
+    total,
+    page,
+    pageSize,
   };
 }
-
 
 export async function getClientById(id: string) {
   return prisma.client.findUnique({
@@ -82,7 +74,6 @@ export async function getClientById(id: string) {
     },
   });
 }
-
 
 export async function updateClient(
   id: string,
@@ -99,7 +90,6 @@ export async function updateClient(
     data,
   });
 }
-
 
 export async function deleteClient(id: string) {
   const workOrderCount = await prisma.workOrder.count({

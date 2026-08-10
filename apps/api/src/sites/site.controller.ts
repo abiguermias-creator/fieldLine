@@ -12,6 +12,8 @@ import {
 import {
   createSiteSchema,
   updateSiteSchema,
+  siteIdSchema,
+  siteLocationSchema,
 } from "./site.schemas.js";
 
 import type
@@ -124,13 +126,16 @@ export async function deactivateSiteController(
 }
 
 export async function updateSiteLocationController(
-  req: Request<SiteParams>,
+  req: Request,
   res: Response
 ) {
-  const { latitude, longitude } = req.body;
+  const { id } = siteIdSchema.parse(req.params);
+
+  const { latitude, longitude } =
+    siteLocationSchema.parse(req.body);
 
   const site = await updateSiteLocation(
-    req.params.id,
+    id,
     {
       latitude,
       longitude,

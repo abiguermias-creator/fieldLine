@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import {
   createClient,
   deleteClient,
@@ -12,13 +13,9 @@ import {
 import {
   createClientSchema,
   updateClientSchema,
+  clientIdSchema,
+  listClientsQuerySchema,
 } from "./client.schemas.js";
-
-
-type ClientParams = {
-  id: string;
-};
-
 
 export async function createClientController(
   req: Request,
@@ -31,30 +28,27 @@ export async function createClientController(
   res.status(201).json(client);
 }
 
-
 export async function getClientsController(
   req: Request,
   res: Response
 ) {
-  const page = Number(req.query.page ?? 1);
-  const search = String(req.query.search ?? "");
+  const query = listClientsQuerySchema.parse(req.query);
 
   const clients = await getClients(
-    page,
-    search
+    query.page,
+    query.search
   );
 
   res.json(clients);
 }
 
-
 export async function getClientController(
-  req: Request<ClientParams>,
+  req: Request,
   res: Response
 ) {
-  const client = await getClientById(
-    req.params.id
-  );
+  const { id } = clientIdSchema.parse(req.params);
+
+  const client = await getClientById(id);
 
   if (!client) {
     return res.status(404).json({
@@ -65,39 +59,32 @@ export async function getClientController(
   res.json(client);
 }
 
-
 export async function updateClientController(
-  req: Request<ClientParams>,
+  req: Request,
   res: Response
 ) {
-  const data = updateClientSchema.parse(
-    req.body
-  );
+  const { id } = clientIdSchema.parse(req.params);
+  const data = updateClientSchema.parse(req.body);
 
-  const client = await updateClient(
-    req.params.id,
-    data
-  );
+  const client = await updateClient(id, data);
 
   res.json(client);
 }
 
-
 export async function deleteClientController(
-  req: Request<ClientParams>,
+  req: Request,
   res: Response
 ) {
   try {
-    await deleteClient(req.params.id);
+    const { id } = clientIdSchema.parse(req.params);
+
+    await deleteClient(id);
 
     res.status(204).send();
-
-  } catch(error:any) {
-
+  } catch (error: any) {
     res.status(400).json({
-      message:error.message,
+      message: error.message,
     });
-
   }
 }
 
@@ -106,7 +93,9 @@ export async function activateClientController(
   res: Response
 ) {
   try {
-  const client = await activateClient(String(req.params.id));
+    const { id } = clientIdSchema.parse(req.params);
+
+    const client = await activateClient(id);
 
     res.json(client);
   } catch (error: any) {
@@ -116,14 +105,14 @@ export async function activateClientController(
   }
 }
 
-
 export async function deactivateClientController(
-  req: Request<ClientParams>,
+  req: Request,
   res: Response
 ) {
-  const client = await deactivateClient(
-    req.params.id
-  );
+  const { id } = clientIdSchema.parse(req.params);
+
+  const client = await deactivateClient(id);
 
   res.json(client);
 }
+
