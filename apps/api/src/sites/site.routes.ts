@@ -10,18 +10,24 @@ import {
   updateSiteLocationController,
 } from "./site.controller.js";
 
-import { requireAuth } from "../middleware/auth.js";
-
+import {
+  requireAuth,
+  requireRole,
+} from "../middleware/auth.js";
 
 const router = Router();
 
+const canManageSites = requireRole(
+  "DISPATCHER",
+  "SUPERVISOR"
+);
 
 router.post(
   "/",
   requireAuth,
+  canManageSites,
   createSiteController
 );
-
 
 router.get(
   "/",
@@ -29,40 +35,38 @@ router.get(
   getSitesController
 );
 
-
 router.get(
   "/:id",
   requireAuth,
   getSiteController
 );
 
-
 router.patch(
   "/:id/location",
   requireAuth,
+  canManageSites,
   updateSiteLocationController
 );
-
 
 router.patch(
   "/:id",
   requireAuth,
+  canManageSites,
   updateSiteController
 );
-
 
 router.delete(
   "/:id",
   requireAuth,
+  canManageSites,
   deleteSiteController
 );
-
 
 router.patch(
   "/:id/deactivate",
   requireAuth,
+  canManageSites,
   deactivateSiteController
 );
-
 
 export default router;
