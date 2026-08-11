@@ -1,6 +1,7 @@
 import { prisma } from "../db/client.js";
 
 export async function createSkill(data: {
+  code: string;
   name: string;
 }) {
   return prisma.skill.create({
@@ -27,6 +28,7 @@ export async function getSkillById(id: string) {
 export async function updateSkill(
   id: string,
   data: {
+    code?: string;
     name?: string;
   }
 ) {

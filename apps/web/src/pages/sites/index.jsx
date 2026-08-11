@@ -110,16 +110,6 @@ async function loadSites() {
     }));
   }
 
-  function resetForm() {
-    setForm({
-      clientId: '',
-      name: '',
-      address: '',
-      city: '',
-      accessNotes: ''
-    });
-  }
-
 async function handleCreateSite() {
   try {
     const createdSite = await createSite({
