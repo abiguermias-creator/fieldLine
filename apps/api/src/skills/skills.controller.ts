@@ -21,58 +21,88 @@ export async function createSkillController(
   req: Request,
   res: Response
 ) {
-  const data = createSkillSchema.parse(req.body);
+  try {
+    const data = createSkillSchema.parse(req.body);
 
-  const skill = await createSkill(data);
+    const skill = await createSkill(data);
 
-  res.status(201).json(skill);
+    return res.status(201).json(skill);
+  } catch (error: any) {
+    return res.status(409).json({
+      message: error.message,
+    });
+  }
 }
 
 export async function getSkillsController(
   _req: Request,
   res: Response
 ) {
-  const skills = await getSkills();
+  try {
+    const skills = await getSkills();
 
-  res.json(skills);
+    return res.json(skills);
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
 }
 
 export async function getSkillController(
   req: Request<SkillParams>,
   res: Response
 ) {
-  const skill = await getSkillById(req.params.id);
+  try {
+    const skill = await getSkillById(req.params.id);
 
-  if (!skill) {
-    return res.status(404).json({
-      message: "Skill not found",
+    if (!skill) {
+      return res.status(404).json({
+        message: "Skill not found",
+      });
+    }
+
+    return res.json(skill);
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
     });
   }
-
-  res.json(skill);
 }
 
 export async function updateSkillController(
   req: Request<SkillParams>,
   res: Response
 ) {
-  const data = updateSkillSchema.parse(req.body);
+  try {
+    const data = updateSkillSchema.parse(req.body);
 
-  const skill = await updateSkill(
-    req.params.id,
-    data
-  );
+    const skill = await updateSkill(
+      req.params.id,
+      data
+    );
 
-  res.json(skill);
+    return res.json(skill);
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
 }
 
 export async function deleteSkillController(
   req: Request<SkillParams>,
   res: Response
 ) {
-  await deleteSkill(req.params.id);
+  try {
+    await deleteSkill(req.params.id);
 
-  res.json({
-    message: "Skill deleted successfully",
-  });
+    return res.json({
+      message: "Skill deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
 }

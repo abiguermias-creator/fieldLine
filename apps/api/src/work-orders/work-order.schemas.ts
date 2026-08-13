@@ -25,6 +25,9 @@ export const updateWorkOrderSchema = z.object({
   priority: z
     .enum(["LOW", "MEDIUM", "HIGH"])
     .optional(),
+  technicianId: z.string().uuid().nullable().optional(),
+  equipmentId: z.string().uuid().nullable().optional(),
+  scheduledAt: z.string().datetime().nullable().optional(),
 });
 
 export const listWorkOrderQuerySchema = z.object({

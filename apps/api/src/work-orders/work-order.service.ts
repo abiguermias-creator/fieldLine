@@ -50,8 +50,23 @@ export async function getWorkOrders(query: {
       include: {
         client: true,
         site: true,
+        technician: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                fullName: true,
+                role: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+        equipment: true,
       },
     }),
+
     prisma.workOrder.count({ where }),
   ]);
 
@@ -72,6 +87,20 @@ export async function getWorkOrderById(id: string) {
     include: {
       client: true,
       site: true,
+      technician: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              isActive: true,
+            },
+          },
+        },
+      },
+      equipment: true,
     },
   });
 }
@@ -83,11 +112,42 @@ export async function updateWorkOrder(
     description?: string;
     status?: WorkOrderStatus;
     priority?: WorkOrderPriority;
+    technicianId?: string | null;
+    equipmentId?: string | null;
+    scheduledAt?: string | null;
   }
 ) {
   return prisma.workOrder.update({
     where: { id },
-    data,
+    data: {
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+      equipmentId: data.equipmentId,
+      technicianId: data.technicianId,
+      scheduledAt: data.scheduledAt
+        ? new Date(data.scheduledAt)
+        : data.scheduledAt,
+    },
+    include: {
+      client: true,
+      site: true,
+      technician: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              isActive: true,
+            },
+          },
+        },
+      },
+      equipment: true,
+    },
   });
 }
 

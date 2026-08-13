@@ -29,6 +29,11 @@ export async function deleteClient(id: string) {
   return response.data;
 }
 
+export async function activateClient(id: string) {
+  const response = await api.patch(`/clients/${id}/activate`);
+  return response.data;
+}
+
 export async function deactivateClient(id: string) {
   const response = await api.patch(`/clients/${id}/deactivate`);
 

@@ -11,6 +11,9 @@ import workOrderRoutes from "./work-orders/work-order.routes.js";
 import clientRoutes from "./clients/client.routes.js";
 import siteRoutes from "./sites/site.routes.js";
 import skillsRoutes from "./skills/skills.routes.js";
+import technicianRoutes from "./technicians/technician.routes.js";
+import technicianSkillRoutes from "./technicians/technician-skill.routes.js";
+import equipmentRoutes from "./equipment/equipment.routes.js";
 
 import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
@@ -66,6 +69,9 @@ export function createApp() {
   app.use("/api/clients", clientRoutes);
   app.use("/api/sites", siteRoutes);
   app.use("/api/skills", skillsRoutes);
+  app.use("/api/technicians", technicianRoutes);
+  app.use("/api/technicians", technicianSkillRoutes);
+  app.use("/api/equipment", equipmentRoutes);
   app.use("/api", protectedRoutes);
   return app;
 }
