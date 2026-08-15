@@ -12,8 +12,9 @@ import {
 
 import {
   requireAuth,
-  requireRole,
 } from "../middleware/auth.js";
+
+import { requireRole } from "../middleware/role.js";
 
 const router = Router();
 
