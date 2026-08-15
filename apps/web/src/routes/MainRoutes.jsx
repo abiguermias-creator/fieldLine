@@ -12,9 +12,14 @@ const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')))
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
 const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
 const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
-
 const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
 
+// pages
+const Clients = Loadable(lazy(() => import('pages/clients')));
+const Sites = Loadable(lazy(() => import('pages/sites')));
+const Skills = Loadable(lazy(() => import('pages/skills')));
+const Technicians = Loadable(lazy(() => import('pages/technicians')));
+const Equipment = Loadable(lazy(() => import('pages/equipment')));
 
 const MainRoutes = {
   path: '/',
@@ -30,6 +35,26 @@ const MainRoutes = {
         {
           path: 'dashboard/default',
           element: <DashboardDefault />
+        },
+        {
+          path: 'clients',
+          element: <Clients />
+        },
+        {
+          path: 'sites',
+          element: <Sites />
+        },
+        {
+          path: 'skills',
+          element: <Skills />
+        },
+        {
+          path: 'technicians',
+          element: <Technicians />
+        },
+        {
+          path: 'equipment',
+          element: <Equipment />
         },
         {
           path: 'typography',
@@ -53,3 +78,4 @@ const MainRoutes = {
 };
 
 export default MainRoutes;
+

@@ -1,6 +1,7 @@
 import { api } from "./client";
 
 type SkillData = {
+  code: string;
   name: string;
 };
 

@@ -10,23 +10,19 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  email        String    @unique @db.Citext
-  passwordHash String    @map("password_hash")
-  fullName     String    @map("full_name")
-  role         UserRole
-  isActive     Boolean   @default(true) @map("is_active")
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
-
-  clientId String? @map("client_id") @db.Uuid
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
+  id                String             @id @default(uuid()) @db.Uuid
+  email             String             @unique @db.Citext
+  passwordHash      String             @map("password_hash")
+  fullName          String             @map("full_name")
+  role              UserRole
+  isActive          Boolean            @default(true) @map("is_active")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastLoginAt       DateTime?          @map("last_login_at") @db.Timestamptz(6)
+  clientId          String?            @map("client_id") @db.Uuid
   refreshTokens     RefreshToken[]
   technicianProfile TechnicianProfile?
-
-  client Client? @relation(fields: [clientId], references: [id])
+  client            Client?            @relation(fields: [clientId], references: [id])
 
   @@map("users")
 }
@@ -37,68 +33,54 @@ model RefreshToken {
   userId    String   @db.Uuid
   expiresAt DateTime @db.Timestamptz(6)
   createdAt DateTime @default(now()) @db.Timestamptz(6)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
 
 model Client {
-  id          String  @id @default(uuid()) @db.Uuid
+  id          String      @id @default(uuid()) @db.Uuid
   name        String
-  email       String? @db.Citext
+  email       String?     @db.Citext
   phone       String?
   address     String?
-  contactName String? @map("contact_name")
-
-  isActive Boolean @default(true) @map("is_active")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  users      User[]
-  sites      Site[]
-  workOrders WorkOrder[]
+  contactName String?     @map("contact_name")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isActive    Boolean     @default(true) @map("is_active")
+  sites       Site[]
+  users       User[]
+  workOrders  WorkOrder[]
 
   @@map("clients")
 }
 
 model Site {
-  id String @id @default(uuid()) @db.Uuid
-
-  clientId String @map("client_id") @db.Uuid
-
-  name    String
-  address String
-  city    String?
-
-  accessNotes String? @map("access_notes")
-
-  latitude  Float?
-  longitude Float?
-
-  coordinatesManual    Boolean @default(false) @map("coordinates_manual")
-  needsManualPlacement Boolean @default(false) @map("needs_manual_placement")
-
-  isActive Boolean @default(true) @map("is_active")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  client Client @relation(fields: [clientId], references: [id])
-
-  workOrders WorkOrder[]
+  id                   String      @id @default(uuid()) @db.Uuid
+  clientId             String      @map("client_id") @db.Uuid
+  name                 String
+  address              String
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  accessNotes          String?     @map("access_notes")
+  city                 String?
+  isActive             Boolean     @default(true) @map("is_active")
+  latitude             Float?
+  longitude            Float?
+  coordinatesManual    Boolean     @default(false) @map("coordinates_manual")
+  needsManualPlacement Boolean     @default(false) @map("needs_manual_placement")
+  client               Client      @relation(fields: [clientId], references: [id])
+  workOrders           WorkOrder[]
 
   @@map("sites")
 }
 
 model GeocodeCache {
-  id        String  @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
   address   String
   city      String?
   latitude  Float
   longitude Float
-
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -108,35 +90,47 @@ model GeocodeCache {
 
 model Skill {
   id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
   name      String   @unique
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  workOrderSkills  WorkOrderSkill[]
+  technicianSkills TechnicianSkill[]
 
   @@map("skills")
 }
 
 model TechnicianProfile {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
-  phone     String?
-  bio       String?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                      String   @id @default(uuid()) @db.Uuid
+  userId                  String   @unique @map("user_id") @db.Uuid
+  employeeCode            String   @unique @map("employee_code")
+  baseLocation            String   @map("base_location")
+  maxWorkingMinutesPerDay Int      @default(480) @map("max_working_minutes_per_day")
+  phone                   String?
+  bio                     String?
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  workOrders WorkOrder[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workOrders       WorkOrder[]
+  technicianSkills TechnicianSkill[]
 
   @@map("technician_profiles")
 }
 
 model Equipment {
   id           String   @id @default(uuid()) @db.Uuid
+  code         String   @unique
   name         String
+  category     String
   description  String?
   serialNumber String?  @unique @map("serial_number")
+  isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  workOrders WorkOrder[]
 
   @@map("equipment")
 }
@@ -145,20 +139,46 @@ model WorkOrder {
   id           String            @id @default(uuid()) @db.Uuid
   clientId     String            @map("client_id") @db.Uuid
   siteId       String            @map("site_id") @db.Uuid
-  technicianId String?           @map("technician_id") @db.Uuid
   title        String
   description  String?
   status       WorkOrderStatus   @default(OPEN)
   priority     WorkOrderPriority @default(MEDIUM)
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  scheduledAt  DateTime?         @map("scheduled_at") @db.Timestamptz(6)
+  technicianId String?           @map("technician_id") @db.Uuid
+  equipmentId  String?           @map("equipment_id") @db.Uuid
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  client     Client             @relation(fields: [clientId], references: [id])
-  site       Site               @relation(fields: [siteId], references: [id])
-  technician TechnicianProfile? @relation(fields: [technicianId], references: [id])
+  client          Client             @relation(fields: [clientId], references: [id])
+  site            Site               @relation(fields: [siteId], references: [id])
+  technician      TechnicianProfile? @relation(fields: [technicianId], references: [id])
+  workOrderSkills WorkOrderSkill[]
+  equipment       Equipment?         @relation(fields: [equipmentId], references: [id])
 
   @@map("work_orders")
+}
+
+model WorkOrderSkill {
+  workOrderId String @map("work_order_id") @db.Uuid
+  skillId     String @map("skill_id") @db.Uuid
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Restrict)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@id([workOrderId, skillId])
+  @@map("work_order_skills")
+}
+
+model TechnicianSkill {
+  technicianId           String    @map("technician_id") @db.Uuid
+  skillId                String    @map("skill_id") @db.Uuid
+  certificationExpiresAt DateTime? @map("certification_expires_at") @db.Timestamptz(6)
+
+  technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  skill      Skill             @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([technicianId, skillId])
+  @@map("technician_skills")
 }
 
 enum WorkOrderStatus {
