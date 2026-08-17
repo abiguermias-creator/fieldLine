@@ -117,6 +117,16 @@ export default function DashboardDefault() {
                         Status: {order.status}
                         <br />
                         Priority: {order.priority}
+                        <br />
+                        Response target:{' '}
+                        {order.slaRespondBy
+                          ? new Date(order.slaRespondBy).toLocaleString()
+                          : 'None'}
+                        <br />
+                        Resolution target:{' '}
+                        {order.slaResolveBy
+                          ? new Date(order.slaResolveBy).toLocaleString()
+                          : 'None'}
                       </>
                     }
                   />
@@ -126,7 +136,8 @@ export default function DashboardDefault() {
           </List>
         </MainCard>
       </Grid>
-            {/* row 4 */}
+
+      {/* row 4 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
         <SaleReportCard />
       </Grid>

@@ -3,44 +3,144 @@ import { z } from "zod";
 export const createWorkOrderSchema = z.object({
   clientId: z.string().uuid(),
   siteId: z.string().uuid(),
-  title: z.string().min(2),
+  title: z
+    .string()
+    .min(2, "Title must be at least 2 characters")
+    .max(200, "Title must not exceed 200 characters"),
   description: z.string().optional(),
-  priority: z
-    .enum(["LOW", "MEDIUM", "HIGH"])
-    .optional(),
+  priority: z.enum(["P1", "P2", "P3", "P4"]),
+  agreedDate: z.string().datetime().nullable().optional(),
+  duplicateConfirmed: z.boolean().optional(),
 });
 
 export const updateWorkOrderSchema = z.object({
-  title: z.string().min(2).optional(),
+  title: z
+    .string()
+    .min(2, "Title must be at least 2 characters")
+    .max(200, "Title must not exceed 200 characters")
+    .optional(),
+
   description: z.string().optional(),
-  status: z
-    .enum([
-      "OPEN",
-      "ASSIGNED",
-      "IN_PROGRESS",
-      "COMPLETED",
-      "CANCELLED",
-    ])
-    .optional(),
+
+status: z
+  .enum([
+    "NEW",
+    "ASSIGNED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CLOSED",
+    "CANCELLED",
+  ])
+  .optional(),
+
   priority: z
-    .enum(["LOW", "MEDIUM", "HIGH"])
+    .enum(["P1", "P2", "P3", "P4"])
     .optional(),
+
+  estimatedDuration: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+
+  skillIds: z
+    .array(z.string().uuid())
+    .optional(),
+
+  agreedDate: z.string().datetime().nullable().optional(),
+
   technicianId: z.string().uuid().nullable().optional(),
+
   equipmentId: z.string().uuid().nullable().optional(),
+
   scheduledAt: z.string().datetime().nullable().optional(),
+});
+
+export const cancelWorkOrderSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Cancellation reason is required")
+    .max(1000, "Cancellation reason must not exceed 1000 characters"),
 });
 
 export const listWorkOrderQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(10),
-  status: z
-    .enum([
-      "OPEN",
-      "ASSIGNED",
-      "IN_PROGRESS",
-      "COMPLETED",
-      "CANCELLED",
-    ])
+
+  limit: z.coerce.number().min(1).max(100).default(25),
+
+  statuses: z
+    .string()
+    .optional()
+    .transform((value) =>
+      value
+        ? value
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : undefined
+    ),
+
+  priorities: z
+    .string()
+    .optional()
+    .transform((value) =>
+      value
+        ? value
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : undefined
+    ),
+
+  technicianId: z
+    .string()
+    .uuid()
     .optional(),
-  sort: z.enum(["createdAt", "priority"]).default("createdAt"),
+
+  clientId: z
+    .string()
+    .uuid()
+    .optional(),
+
+  search: z
+    .string()
+    .trim()
+    .optional(),
+
+  createdFrom: z
+    .string()
+    .datetime()
+    .optional(),
+
+  createdTo: z
+    .string()
+    .datetime()
+    .optional(),
+
+  sortBy: z
+    .enum([
+      "createdAt",
+      "priority",
+      "nearestSla"
+    ])
+    .default("createdAt"),
+
+  sortOrder: z
+    .enum(["asc", "desc"])
+    .default("desc"),
+});
+
+export const createClientRequestSchema = z.object({
+  siteId: z.string().uuid(),
+  title: z
+    .string()
+    .min(2, "Title must be at least 2 characters")
+    .max(200, "Title must not exceed 200 characters"),
+  description: z.string().optional(),
+  priority: z.enum(["P1", "P2", "P3", "P4"]),
+  p1Confirmed: z.boolean().optional(),
+  duplicateConfirmed: z.boolean().optional(),
+  agreedDate: z.string().datetime().nullable().optional(),
 });
