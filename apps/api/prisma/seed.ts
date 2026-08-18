@@ -1,109 +1,244 @@
 import { PrismaClient, UserRole } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash("password123", 10);
+  const passwordHash = await argon2.hash("password123");
 
-  // Create Admin/Technician User
-  const user = await prisma.user.upsert({
+  // Dispatcher User
+   const user = await prisma.user.upsert({
     where: {
       email: "admin@fieldline.com",
     },
-    update: {},
+    update: {
+      passwordHash,
+      fullName: "Fieldline Dispatcher",
+      role: UserRole.DISPATCHER,
+      isActive: true,
+    },
     create: {
       email: "admin@fieldline.com",
-      password: passwordHash,
-      role: UserRole.TECHNICIAN,
+      passwordHash,
+      fullName: "Fieldline Dispatcher",
+      role: UserRole.DISPATCHER,
+      isActive: true,
     },
   });
 
-  // Create Technician Profile
-  const technicianProfile = await prisma.technicianProfile.upsert({
+ 
+  // Technician Profile
+    const technicianProfile = await prisma.technicianProfile.upsert({
     where: {
       userId: user.id,
     },
-    update: {},
+    update: {
+      employeeCode: "DISP-001",
+      baseLocation: "Addis Ababa",
+      phone: "+251900000000",
+      bio: "Field service technician",
+    },
     create: {
       userId: user.id,
+      employeeCode: "DISP-001",
+      baseLocation: "Addis Ababa",
       phone: "+251900000000",
       bio: "Field service technician",
     },
   });
 
-  // Create Client
-  const client = await prisma.client.upsert({
+  
+  // Client
+
+  let client = await prisma.client.findFirst({
     where: {
-      email: "contact@abc.com",
-    },
-    update: {},
-    create: {
       name: "ABC Company",
-      email: "contact@abc.com",
-      phone: "+251911111111",
-      address: "Addis Ababa",
-      contactName: "Abebe Kebede",
     },
   });
 
-  // Create Site
-  const site = await prisma.site.upsert({
+  if (!client) {
+    client = await prisma.client.create({
+      data: {
+        name: "ABC Company",
+        email: "contact@abc.com",
+        phone: "+251911111111",
+        address: "Addis Ababa",
+        contactName: "Abebe Kebede",
+        isActive: true,
+      },
+    });
+  }
+
+  // Client User
+await prisma.user.upsert({
+  where: {
+    email: "client@abc.com",
+  },
+  update: {
+    passwordHash,
+    fullName: "ABC Company Contact",
+    role: UserRole.CLIENT,
+    clientId: client.id,
+    isActive: true,
+  },
+  create: {
+    email: "client@abc.com",
+    passwordHash,
+    fullName: "ABC Company Contact",
+    role: UserRole.CLIENT,
+    clientId: client.id,
+    isActive: true,
+  },
+});
+
+  
+  // Site
+    let site = await prisma.site.findFirst({
     where: {
-      name_clientId: {
-        name: "Main Office",
+      clientId: client.id,
+      name: "Main Office",
+    },
+  });
+
+  if (!site) {
+    site = await prisma.site.create({
+      data: {
         clientId: client.id,
+        name: "Main Office",
+        address: "Bole, Addis Ababa",
+        city: "Addis Ababa",
+        isActive: true,
+        coordinatesManual: false,
+        needsManualPlacement: false,
+      },
+    });
+  }
+
+   // Skills
+   const electricalSkill = await prisma.skill.upsert({
+    where: {
+      name: "Electrical Repair",
+    },
+    update: {
+      code: "ELEC-001",
+    },
+    create: {
+      code: "ELEC-001",
+      name: "Electrical Repair",
+    },
+  });
+
+  const maintenanceSkill = await prisma.skill.upsert({
+    where: {
+      name: "Equipment Maintenance",
+    },
+    update: {
+      code: "MAINT-001",
+    },
+    create: {
+      code: "MAINT-001",
+      name: "Equipment Maintenance",
+    },
+  });
+
+  
+  // Equipment
+   const equipment = await prisma.equipment.upsert({
+    where: {
+      code: "EQ-001",
+    },
+    update: {
+      name: "Testing Machine",
+      category: "Diagnostic",
+      description: "Diagnostic equipment",
+      serialNumber: "SERIAL-001",
+      isActive: true,
+    },
+    create: {
+      code: "EQ-001",
+      name: "Testing Machine",
+      category: "Diagnostic",
+      description: "Diagnostic equipment",
+      serialNumber: "SERIAL-001",
+      isActive: true,
+    },
+  });
+
+  
+  // Technician Skills
+   await prisma.technicianSkill.upsert({
+    where: {
+      technicianId_skillId: {
+        technicianId: technicianProfile.id,
+        skillId: electricalSkill.id,
       },
     },
     update: {},
     create: {
-      clientId: client.id,
-      name: "Main Office",
-      address: "Bole, Addis Ababa",
+      technicianId: technicianProfile.id,
+      skillId: electricalSkill.id,
     },
   });
 
-  // Create Skills
-  await prisma.skill.createMany({
-    data: [
-      { name: "Electrical Repair" },
-      { name: "Equipment Maintenance" },
-    ],
-    skipDuplicates: true,
-  });
-
-  // Create Equipment
-  const equipment = await prisma.equipment.upsert({
+  await prisma.technicianSkill.upsert({
     where: {
-      serialNumber: "EQ-001",
+      technicianId_skillId: {
+        technicianId: technicianProfile.id,
+        skillId: maintenanceSkill.id,
+      },
     },
     update: {},
     create: {
-      name: "Testing Machine",
-      description: "Diagnostic equipment",
-      serialNumber: "EQ-001",
-    },
-  });
-
-  // Create Work Order
-  await prisma.workOrder.create({
-    data: {
-      clientId: client.id,
-      siteId: site.id,
       technicianId: technicianProfile.id,
-      title: "Inspect equipment",
-      description: "Routine maintenance inspection",
-      priority: "HIGH",
-      status: "OPEN",
+      skillId: maintenanceSkill.id,
     },
   });
 
-  console.log("✅ Seed completed successfully");
+  
+  // Work Order
+ const existingWorkOrder = await prisma.workOrder.findUnique({
+    where: {
+      reference: "WO-2026-0001",
+    },
+  });
+
+  if (!existingWorkOrder) {
+    await prisma.workOrder.create({
+      data: {
+        reference: "WO-2026-0001",
+        clientId: client.id,
+        siteId: site.id,
+        technicianId: technicianProfile.id,
+        equipmentId: equipment.id,
+        title: "Inspect equipment",
+        description: "Routine maintenance inspection",
+        priority: "P1",
+        status: "NEW",
+      },
+    });
+  }
+
+
+  // Work Order Sequence
+   await prisma.workOrderSequence.upsert({
+    where: {
+      year: 2026,
+    },
+    update: {
+      lastNumber: 5,
+    },
+    create: {
+      year: 2026,
+      lastNumber: 5,
+    },
+  });
+
+  console.log("Seed completed successfully");
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed failed:", e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {

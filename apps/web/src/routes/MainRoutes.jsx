@@ -17,10 +17,13 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 // pages
 const Clients = Loadable(lazy(() => import('pages/clients')));
 const Sites = Loadable(lazy(() => import('pages/sites')));
+const WorkOrders = Loadable(lazy(() => import('pages/work-orders')));
+const WorkOrderDetail = Loadable(lazy(() => import('pages/work-orders/detail'))
+);
 const Skills = Loadable(lazy(() => import('pages/skills')));
 const Technicians = Loadable(lazy(() => import('pages/technicians')));
 const Equipment = Loadable(lazy(() => import('pages/equipment')));
-
+const Requests = Loadable(lazy(() => import('pages/requests')));
 const MainRoutes = {
   path: '/',
   element: <ProtectedRoute />,
@@ -45,6 +48,14 @@ const MainRoutes = {
           element: <Sites />
         },
         {
+          path: 'work-orders',
+          element: <WorkOrders />
+        },
+        {
+          path: 'work-orders/:id',
+          element: <WorkOrderDetail />
+        },
+        {
           path: 'skills',
           element: <Skills />
         },
@@ -55,6 +66,10 @@ const MainRoutes = {
         {
           path: 'equipment',
           element: <Equipment />
+        },
+        {
+          path: 'requests',
+          element: <Requests />
         },
         {
           path: 'typography',

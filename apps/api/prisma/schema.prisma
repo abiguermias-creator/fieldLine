@@ -23,6 +23,7 @@ model User {
   refreshTokens     RefreshToken[]
   technicianProfile TechnicianProfile?
   client            Client?            @relation(fields: [clientId], references: [id])
+  workOrderEvents   WorkOrderEvent[]
 
   @@map("users")
 }
@@ -136,26 +137,60 @@ model Equipment {
 }
 
 model WorkOrder {
-  id           String            @id @default(uuid()) @db.Uuid
-  clientId     String            @map("client_id") @db.Uuid
-  siteId       String            @map("site_id") @db.Uuid
-  title        String
-  description  String?
-  status       WorkOrderStatus   @default(OPEN)
-  priority     WorkOrderPriority @default(MEDIUM)
-  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  scheduledAt  DateTime?         @map("scheduled_at") @db.Timestamptz(6)
-  technicianId String?           @map("technician_id") @db.Uuid
-  equipmentId  String?           @map("equipment_id") @db.Uuid
+  id                  String            @id @default(uuid()) @db.Uuid
+  reference           String            @unique
+  clientId            String            @map("client_id") @db.Uuid
+  siteId              String            @map("site_id") @db.Uuid
+  title               String
+  description         String?
+  cancellationReason  String?           @map("cancellation_reason")
+  status              WorkOrderStatus   @default(NEW)
+  priority            WorkOrderPriority @default(P3)
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  scheduledAt         DateTime?         @map("scheduled_at") @db.Timestamptz(6)
+  estimatedDuration   Int?              @map("estimated_duration")
+  agreedDate          DateTime?         @map("agreed_date") @db.Timestamptz(6)
+  slaRespondBy        DateTime?         @map("sla_respond_by") @db.Timestamptz(6)
+  slaResolveBy        DateTime?         @map("sla_resolve_by") @db.Timestamptz(6)
+  technicianId        String?           @map("technician_id") @db.Uuid
+  equipmentId         String?           @map("equipment_id") @db.Uuid
+  originalWorkOrderId String?           @map("original_work_order_id") @db.Uuid
+
+  originalWorkOrder  WorkOrder?  @relation("WorkOrderFollowUp", fields: [originalWorkOrderId], references: [id])
+  followUpWorkOrders WorkOrder[] @relation("WorkOrderFollowUp")
 
   client          Client             @relation(fields: [clientId], references: [id])
   site            Site               @relation(fields: [siteId], references: [id])
   technician      TechnicianProfile? @relation(fields: [technicianId], references: [id])
   workOrderSkills WorkOrderSkill[]
   equipment       Equipment?         @relation(fields: [equipmentId], references: [id])
+  events          WorkOrderEvent[]
 
   @@map("work_orders")
+}
+
+model WorkOrderEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  workOrderId String   @map("work_order_id") @db.Uuid
+  actorId     String?  @map("actor_id") @db.Uuid
+  eventType   String   @map("event_type")
+  oldValue    String?  @map("old_value")
+  newValue    String?  @map("new_value")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  actor     User?     @relation(fields: [actorId], references: [id])
+
+  @@map("work_order_events")
+}
+
+model WorkOrderSequence {
+  year       Int      @id
+  lastNumber Int      @map("last_number")
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("work_order_sequences")
 }
 
 model WorkOrderSkill {
@@ -182,17 +217,19 @@ model TechnicianSkill {
 }
 
 enum WorkOrderStatus {
-  OPEN
+  NEW
   ASSIGNED
   IN_PROGRESS
   COMPLETED
+  CLOSED
   CANCELLED
 }
 
 enum WorkOrderPriority {
-  LOW
-  MEDIUM
-  HIGH
+  P1
+  P2
+  P3
+  P4
 }
 
 enum UserRole {
