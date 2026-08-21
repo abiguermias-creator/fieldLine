@@ -8,19 +8,13 @@ import {
   updateSkill,
 } from "./skills.service.js";
 
-import {
-  createSkillSchema,
-  updateSkillSchema,
-} from "./skills.schemas.js";
+import { createSkillSchema, updateSkillSchema } from "./skills.schemas.js";
 
 type SkillParams = {
   id: string;
 };
 
-export async function createSkillController(
-  req: Request,
-  res: Response
-) {
+export async function createSkillController(req: Request, res: Response) {
   try {
     const data = createSkillSchema.parse(req.body);
 
@@ -34,10 +28,7 @@ export async function createSkillController(
   }
 }
 
-export async function getSkillsController(
-  _req: Request,
-  res: Response
-) {
+export async function getSkillsController(_req: Request, res: Response) {
   try {
     const skills = await getSkills();
 
@@ -49,10 +40,7 @@ export async function getSkillsController(
   }
 }
 
-export async function getSkillController(
-  req: Request<SkillParams>,
-  res: Response
-) {
+export async function getSkillController(req: Request<SkillParams>, res: Response) {
   try {
     const skill = await getSkillById(req.params.id);
 
@@ -70,17 +58,11 @@ export async function getSkillController(
   }
 }
 
-export async function updateSkillController(
-  req: Request<SkillParams>,
-  res: Response
-) {
+export async function updateSkillController(req: Request<SkillParams>, res: Response) {
   try {
     const data = updateSkillSchema.parse(req.body);
 
-    const skill = await updateSkill(
-      req.params.id,
-      data
-    );
+    const skill = await updateSkill(req.params.id, data);
 
     return res.json(skill);
   } catch (error: any) {
@@ -90,10 +72,7 @@ export async function updateSkillController(
   }
 }
 
-export async function deleteSkillController(
-  req: Request<SkillParams>,
-  res: Response
-) {
+export async function deleteSkillController(req: Request<SkillParams>, res: Response) {
   try {
     await deleteSkill(req.params.id);
 

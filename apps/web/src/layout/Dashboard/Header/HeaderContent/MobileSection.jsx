@@ -15,7 +15,7 @@ import IconButton from 'components/@extended/IconButton';
 import Transitions from 'components/@extended/Transitions';
 
 // assets
-import { MoreOutlined } from "@ant-design/icons";
+import { MoreOutlined } from '@ant-design/icons';
 
 // ==============================|| HEADER CONTENT - MOBILE ||============================== //
 

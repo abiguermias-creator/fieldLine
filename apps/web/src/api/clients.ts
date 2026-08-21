@@ -1,24 +1,18 @@
-import { api } from "./client";
+import { api } from './client';
 
-export async function getClients(page = 1, search = "") {
-  const response = await api.get("/clients", {
+export async function getClients(page = 1, search = '') {
+  const response = await api.get('/clients', {
     params: {
       page,
-      search,
-    },
+      search
+    }
   });
 
   return response.data;
 }
 
-export async function createClient(data: {
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  contactName?: string;
-}) {
-  const response = await api.post("/clients", data);
+export async function createClient(data: { name: string; email?: string; phone?: string; address?: string; contactName?: string }) {
+  const response = await api.post('/clients', data);
 
   return response.data;
 }

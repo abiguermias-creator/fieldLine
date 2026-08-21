@@ -8,6 +8,7 @@ export const createWorkOrderSchema = z.object({
     .min(2, "Title must be at least 2 characters")
     .max(200, "Title must not exceed 200 characters"),
   description: z.string().optional(),
+  isOutdoor: z.boolean().optional(),
   priority: z.enum(["P1", "P2", "P3", "P4"]),
   agreedDate: z.string().datetime().nullable().optional(),
   duplicateConfirmed: z.boolean().optional(),
@@ -22,31 +23,15 @@ export const updateWorkOrderSchema = z.object({
 
   description: z.string().optional(),
 
-status: z
-  .enum([
-    "NEW",
-    "ASSIGNED",
-    "IN_PROGRESS",
-    "COMPLETED",
-    "CLOSED",
-    "CANCELLED",
-  ])
-  .optional(),
+  isOutdoor: z.boolean().optional(),
 
-  priority: z
-    .enum(["P1", "P2", "P3", "P4"])
-    .optional(),
+  status: z.enum(["NEW","TRIAGED","ASSIGNED","SCHEDULED","IN_PROGRESS","COMPLETED","CLOSED","CANCELLED",]).optional(),
 
-  estimatedDuration: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .optional(),
+  priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
 
-  skillIds: z
-    .array(z.string().uuid())
-    .optional(),
+  estimatedDuration: z.number().int().positive().nullable().optional(),
+
+  skillIds: z.array(z.string().uuid()).optional(),
 
   agreedDate: z.string().datetime().nullable().optional(),
 
@@ -55,6 +40,17 @@ status: z
   equipmentId: z.string().uuid().nullable().optional(),
 
   scheduledAt: z.string().datetime().nullable().optional(),
+
+  scheduledEndAt: z.string().datetime().nullable().optional(),
+
+  overrideDailyHours: z.boolean().optional(),
+
+overrideReason: z
+  .string()
+  .trim()
+  .min(1, "Override reason is required")
+  .max(1000, "Override reason must not exceed 1000 characters")
+  .optional(),
 });
 
 export const cancelWorkOrderSchema = z.object({
@@ -63,6 +59,14 @@ export const cancelWorkOrderSchema = z.object({
     .trim()
     .min(1, "Cancellation reason is required")
     .max(1000, "Cancellation reason must not exceed 1000 characters"),
+});
+
+export const unassignWorkOrderSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Unassignment reason is required")
+    .max(1000, "Unassignment reason must not exceed 1000 characters"),
 });
 
 export const listWorkOrderQuerySchema = z.object({
@@ -79,7 +83,7 @@ export const listWorkOrderQuerySchema = z.object({
             .split(",")
             .map((item) => item.trim())
             .filter(Boolean)
-        : undefined
+        : undefined,
     ),
 
   priorities: z
@@ -91,45 +95,22 @@ export const listWorkOrderQuerySchema = z.object({
             .split(",")
             .map((item) => item.trim())
             .filter(Boolean)
-        : undefined
+        : undefined,
     ),
 
-  technicianId: z
-    .string()
-    .uuid()
-    .optional(),
+  technicianId: z.string().uuid().optional(),
 
-  clientId: z
-    .string()
-    .uuid()
-    .optional(),
+  clientId: z.string().uuid().optional(),
 
-  search: z
-    .string()
-    .trim()
-    .optional(),
+  search: z.string().trim().optional(),
 
-  createdFrom: z
-    .string()
-    .datetime()
-    .optional(),
+  createdFrom: z.string().datetime().optional(),
 
-  createdTo: z
-    .string()
-    .datetime()
-    .optional(),
+  createdTo: z.string().datetime().optional(),
 
-  sortBy: z
-    .enum([
-      "createdAt",
-      "priority",
-      "nearestSla"
-    ])
-    .default("createdAt"),
+  sortBy: z.enum(["createdAt", "priority", "nearestSla"]).default("createdAt"),
 
-  sortOrder: z
-    .enum(["asc", "desc"])
-    .default("desc"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export const createClientRequestSchema = z.object({

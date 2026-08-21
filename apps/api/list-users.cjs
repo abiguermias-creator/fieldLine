@@ -6,8 +6,8 @@ p.user
   .findMany({
     select: {
       email: true,
-      role: true
-    }
+      role: true,
+    },
   })
   .then(console.log)
   .finally(() => p.$disconnect());

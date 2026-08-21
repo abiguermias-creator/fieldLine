@@ -16,10 +16,7 @@ import {
   listTechniciansQuerySchema,
 } from "./technician.schemas.js";
 
-export async function createTechnicianController(
-  req: Request,
-  res: Response
-) {
+export async function createTechnicianController(req: Request, res: Response) {
   try {
     const data = createTechnicianSchema.parse(req.body);
 
@@ -33,19 +30,11 @@ export async function createTechnicianController(
   }
 }
 
-export async function getTechniciansController(
-  req: Request,
-  res: Response
-) {
+export async function getTechniciansController(req: Request, res: Response) {
   try {
     const query = listTechniciansQuerySchema.parse(req.query);
 
-    const technicians = await getTechnicians(
-  query.page,
-  query.limit,
-  query.search,
-  query.skillId
-);
+    const technicians = await getTechnicians(query.page, query.limit, query.search, query.skillId);
 
     res.json(technicians);
   } catch (error: any) {
@@ -55,10 +44,7 @@ export async function getTechniciansController(
   }
 }
 
-export async function getTechnicianController(
-  req: Request,
-  res: Response
-) {
+export async function getTechnicianController(req: Request, res: Response) {
   try {
     const { id } = technicianIdSchema.parse(req.params);
 
@@ -78,10 +64,7 @@ export async function getTechnicianController(
   }
 }
 
-export async function updateTechnicianController(
-  req: Request,
-  res: Response
-) {
+export async function updateTechnicianController(req: Request, res: Response) {
   try {
     const { id } = technicianIdSchema.parse(req.params);
     const data = updateTechnicianSchema.parse(req.body);
@@ -96,10 +79,7 @@ export async function updateTechnicianController(
   }
 }
 
-export async function deactivateTechnicianController(
-  req: Request,
-  res: Response
-) {
+export async function deactivateTechnicianController(req: Request, res: Response) {
   try {
     const { id } = technicianIdSchema.parse(req.params);
 
@@ -113,10 +93,7 @@ export async function deactivateTechnicianController(
   }
 }
 
-export async function activateTechnicianController(
-  req: Request,
-  res: Response
-) {
+export async function activateTechnicianController(req: Request, res: Response) {
   try {
     const { id } = technicianIdSchema.parse(req.params);
 

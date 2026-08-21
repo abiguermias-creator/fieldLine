@@ -7,48 +7,42 @@ type GeocodeResult = {
 
 export async function geocodeAddress(
   address: string,
-  city?: string
+  city?: string,
 ): Promise<GeocodeResult | null> {
   const normalizedAddress = address.trim();
   const normalizedCity = city?.trim() || null;
 
   // Check cache first
-const cached = normalizedCity
-  ? await prisma.geocodeCache.findUnique({
-      where: {
-        address_city: {
-          address: normalizedAddress,
-          city: normalizedCity,
+  const cached = normalizedCity
+    ? await prisma.geocodeCache.findUnique({
+        where: {
+          address_city: {
+            address: normalizedAddress,
+            city: normalizedCity,
+          },
         },
-      },
-    })
-  : null;
+      })
+    : null;
 
   if (cached && cached.latitude !== null && cached.longitude !== null) {
-  console.log(
-    `Using cached geocode for ${normalizedAddress}, ${normalizedCity ?? ""}`
-  );
+    console.log(`Using cached geocode for ${normalizedAddress}, ${normalizedCity ?? ""}`);
 
-  return {
-    latitude: cached.latitude,
-    longitude: cached.longitude,
-  };
-}
+    return {
+      latitude: cached.latitude,
+      longitude: cached.longitude,
+    };
+  }
 
-  const query = normalizedCity
-    ? `${normalizedAddress}, ${normalizedCity}`
-    : normalizedAddress;
+  const query = normalizedCity ? `${normalizedAddress}, ${normalizedCity}` : normalizedAddress;
 
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        query
-      )}`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
       {
         headers: {
           "User-Agent": "FieldLine-App/1.0",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -85,11 +79,7 @@ const cached = normalizedCity
       },
     });
 
-    console.log(
-      `Geocoded and cached: ${normalizedAddress}, ${
-        normalizedCity ?? ""
-      }`
-    );
+    console.log(`Geocoded and cached: ${normalizedAddress}, ${normalizedCity ?? ""}`);
 
     return result;
   } catch (error) {
@@ -112,17 +102,12 @@ export async function geocodeSite(siteId: string) {
 
   // Never overwrite manually placed coordinates
   if (site.coordinatesManual) {
-    console.log(
-      `Skipping geocode because site ${site.id} has manual coordinates`
-    );
+    console.log(`Skipping geocode because site ${site.id} has manual coordinates`);
 
     return;
   }
 
-  const result = await geocodeAddress(
-    site.address,
-    site.city ?? undefined
-  );
+  const result = await geocodeAddress(site.address, site.city ?? undefined);
 
   if (!result) {
     console.log(`Could not geocode site ${site.id}`);

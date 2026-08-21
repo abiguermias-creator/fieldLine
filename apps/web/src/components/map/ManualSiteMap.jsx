@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMap
-} from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const DEFAULT_POSITION = [9.03, 38.74]; // Addis Ababa
@@ -20,33 +14,17 @@ function MapCenterUpdater({ position }) {
   return null;
 }
 
-export default function ManualSiteMap({
-  latitude,
-  longitude,
-  onLocationChange
-}) {
+export default function ManualSiteMap({ latitude, longitude, onLocationChange }) {
   const initialPosition =
-    latitude !== null &&
-    latitude !== undefined &&
-    longitude !== null &&
-    longitude !== undefined
+    latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined
       ? [Number(latitude), Number(longitude)]
       : DEFAULT_POSITION;
 
-  const [position, setPosition] =
-    useState(initialPosition);
+  const [position, setPosition] = useState(initialPosition);
 
   useEffect(() => {
-    if (
-      latitude !== null &&
-      latitude !== undefined &&
-      longitude !== null &&
-      longitude !== undefined
-    ) {
-      setPosition([
-        Number(latitude),
-        Number(longitude)
-      ]);
+    if (latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined) {
+      setPosition([Number(latitude), Number(longitude)]);
     }
   }, [latitude, longitude]);
 
@@ -54,10 +32,7 @@ export default function ManualSiteMap({
     const marker = event.target;
     const location = marker.getLatLng();
 
-    const newPosition = [
-      location.lat,
-      location.lng
-    ];
+    const newPosition = [location.lat, location.lng];
 
     setPosition(newPosition);
 
@@ -78,10 +53,7 @@ export default function ManualSiteMap({
     >
       <MapCenterUpdater position={position} />
 
-      <TileLayer
-        attribution='&copy; OpenStreetMap contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       <Marker
         position={position}

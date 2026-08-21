@@ -16,10 +16,7 @@ import {
   equipmentIdSchema,
 } from "./equipment.schemas.js";
 
-export async function createEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function createEquipmentController(req: Request, res: Response) {
   try {
     const data = createEquipmentSchema.parse(req.body);
 
@@ -33,10 +30,7 @@ export async function createEquipmentController(
   }
 }
 
-export async function getEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function getEquipmentController(req: Request, res: Response) {
   try {
     const equipment = await getEquipment();
 
@@ -48,10 +42,7 @@ export async function getEquipmentController(
   }
 }
 
-export async function getEquipmentByIdController(
-  req: Request,
-  res: Response
-) {
+export async function getEquipmentByIdController(req: Request, res: Response) {
   try {
     const { id } = equipmentIdSchema.parse(req.params);
 
@@ -71,10 +62,7 @@ export async function getEquipmentByIdController(
   }
 }
 
-export async function updateEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function updateEquipmentController(req: Request, res: Response) {
   try {
     const { id } = equipmentIdSchema.parse(req.params);
     const data = updateEquipmentSchema.parse(req.body);
@@ -89,10 +77,7 @@ export async function updateEquipmentController(
   }
 }
 
-export async function deleteEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function deleteEquipmentController(req: Request, res: Response) {
   try {
     const { id } = equipmentIdSchema.parse(req.params);
 
@@ -106,10 +91,7 @@ export async function deleteEquipmentController(
   }
 }
 
-export async function deactivateEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function deactivateEquipmentController(req: Request, res: Response) {
   try {
     const { id } = equipmentIdSchema.parse(req.params);
 
@@ -123,10 +105,7 @@ export async function deactivateEquipmentController(
   }
 }
 
-export async function activateEquipmentController(
-  req: Request,
-  res: Response
-) {
+export async function activateEquipmentController(req: Request, res: Response) {
   try {
     const { id } = equipmentIdSchema.parse(req.params);
 

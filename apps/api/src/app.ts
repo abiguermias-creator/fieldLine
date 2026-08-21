@@ -14,6 +14,7 @@ import skillsRoutes from "./skills/skills.routes.js";
 import technicianRoutes from "./technicians/technician.routes.js";
 import technicianSkillRoutes from "./technicians/technician-skill.routes.js";
 import equipmentRoutes from "./equipment/equipment.routes.js";
+import notificationRoutes from "./notifications/notification.routes.js";
 
 import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
@@ -25,21 +26,20 @@ export function createApp() {
   app.use(helmet());
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
-  
 
   app.use(
     cors({
       origin: config.CORS_ORIGINS,
       credentials: true,
-    })
+    }),
   );
 
   app.use(
-  (pinoHttp as any)({
-    logger,
-    genReqId: () => ulid(),
-  })
-);
+    (pinoHttp as any)({
+      logger,
+      genReqId: () => ulid(),
+    }),
+  );
 
   const healthHandler = async (_req: express.Request, res: express.Response) => {
     let database = "ok";
@@ -58,10 +58,10 @@ export function createApp() {
     });
   };
 
-  // For the web app (proxied through /api)
+  
   app.get("/api/health", healthHandler);
 
-  // For Render health checks
+  
   app.get("/health", healthHandler);
   app.use("/api/auth", authRoutes);
   app.use("/api/test", testRoutes);
@@ -72,6 +72,7 @@ export function createApp() {
   app.use("/api/technicians", technicianRoutes);
   app.use("/api/technicians", technicianSkillRoutes);
   app.use("/api/equipment", equipmentRoutes);
+  app.use("/api/notifications", notificationRoutes);
   app.use("/api", protectedRoutes);
   return app;
 }

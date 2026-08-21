@@ -6,11 +6,11 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 
 // assets
-import { CommentOutlined } from "@ant-design/icons";
-import { LockOutlined } from "@ant-design/icons";
-import { QuestionCircleOutlined } from "@ant-design/icons";
-import { UserOutlined } from "@ant-design/icons";
-import { UnorderedListOutlined } from "@ant-design/icons";
+import { CommentOutlined } from '@ant-design/icons';
+import { LockOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
+import { UnorderedListOutlined } from '@ant-design/icons';
 
 // ==============================|| HEADER PROFILE - SETTING TAB ||============================== //
 

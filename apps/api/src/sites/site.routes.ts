@@ -10,64 +10,26 @@ import {
   updateSiteLocationController,
 } from "./site.controller.js";
 
-import {
-  requireAuth,
-} from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 import { requireRole } from "../middleware/role.js";
 
 const router = Router();
 
-const canManageSites = requireRole(
-  "DISPATCHER",
-  "SUPERVISOR"
-);
+const canManageSites = requireRole("DISPATCHER", "SUPERVISOR");
 
-router.post(
-  "/",
-  requireAuth,
-  canManageSites,
-  createSiteController
-);
+router.post("/", requireAuth, canManageSites, createSiteController);
 
-router.get(
-  "/",
-  requireAuth,
-  getSitesController
-);
+router.get("/", requireAuth, getSitesController);
 
-router.get(
-  "/:id",
-  requireAuth,
-  getSiteController
-);
+router.get("/:id", requireAuth, getSiteController);
 
-router.patch(
-  "/:id/location",
-  requireAuth,
-  canManageSites,
-  updateSiteLocationController
-);
+router.patch("/:id/location", requireAuth, canManageSites, updateSiteLocationController);
 
-router.patch(
-  "/:id",
-  requireAuth,
-  canManageSites,
-  updateSiteController
-);
+router.patch("/:id", requireAuth, canManageSites, updateSiteController);
 
-router.delete(
-  "/:id",
-  requireAuth,
-  canManageSites,
-  deleteSiteController
-);
+router.delete("/:id", requireAuth, canManageSites, deleteSiteController);
 
-router.patch(
-  "/:id/deactivate",
-  requireAuth,
-  canManageSites,
-  deactivateSiteController
-);
+router.patch("/:id/deactivate", requireAuth, canManageSites, deactivateSiteController);
 
 export default router;

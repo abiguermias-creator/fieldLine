@@ -3,20 +3,11 @@ import type { AuthRequest } from "../middleware/auth.js";
 import { prisma } from "../db/client.js";
 import { ZodError } from "zod";
 
-import {
-  registerSchema,
-  loginSchema,
-} from "./auth.schemas.js";
+import { registerSchema, loginSchema } from "./auth.schemas.js";
 
-import {
-  registerUser,
-  loginUser,
-  refreshAccessToken,
-  logoutUser,
-} from "./auth.service.js";
+import { registerUser, loginUser, refreshAccessToken, logoutUser } from "./auth.service.js";
 
 import { config } from "../lib/config.js";
-
 
 export const register: RequestHandler = async (req, res) => {
   try {
@@ -29,30 +20,19 @@ export const register: RequestHandler = async (req, res) => {
       password: data.password,
     });
 
-    res.cookie(
-      "refreshToken",
-      result.refreshToken,
-      {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge:
-  config.REFRESH_TOKEN_DAYS *
-  24 *
-  60 *
-  60 *
-  1000,
-      }
-    );
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: config.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+    });
 
     res.status(201).json({
       message: "User registered successfully",
       user: result.user,
       accessToken: result.accessToken,
     });
-
   } catch (error: any) {
-
     if (error instanceof ZodError) {
       const firstError = error.errors[0];
 
@@ -73,30 +53,17 @@ export const login: RequestHandler = async (req, res) => {
 
     const result = await loginUser(data);
 
-
-    res.cookie(
-      "refreshToken",
-      result.refreshToken,
-      {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge:
-  config.REFRESH_TOKEN_DAYS *
-  24 *
-  60 *
-  60 *
-  1000,
-      }
-    );
-
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: config.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       user: result.user,
       accessToken: result.accessToken,
     });
-
-
   } catch (error: any) {
     res.status(401).json({
       message: error.message,
@@ -104,13 +71,9 @@ export const login: RequestHandler = async (req, res) => {
   }
 };
 
-
-
 export const refresh: RequestHandler = async (req, res) => {
   try {
-
     const refreshToken = req.cookies.refreshToken;
-
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -118,16 +81,11 @@ export const refresh: RequestHandler = async (req, res) => {
       });
     }
 
-
-    const accessToken =
-      await refreshAccessToken(refreshToken);
-
+    const accessToken = await refreshAccessToken(refreshToken);
 
     res.json({
       accessToken,
     });
-
-
   } catch (error: any) {
     res.status(401).json({
       message: error.message,
@@ -135,28 +93,19 @@ export const refresh: RequestHandler = async (req, res) => {
   }
 };
 
-
-
 export const logout: RequestHandler = async (req, res) => {
   try {
-
-    const refreshToken =
-      req.cookies.refreshToken;
-
+    const refreshToken = req.cookies.refreshToken;
 
     if (refreshToken) {
       await logoutUser(refreshToken);
     }
 
-
     res.clearCookie("refreshToken");
-
 
     res.json({
       message: "Logged out successfully",
     });
-
-
   } catch (error: any) {
     res.status(400).json({
       message: error.message,
@@ -164,12 +113,7 @@ export const logout: RequestHandler = async (req, res) => {
   }
 };
 
-
-
-export const me = async (
-  req: AuthRequest,
-  res: any
-) => {
+export const me = async (req: AuthRequest, res: any) => {
   try {
     if (!req.user) {
       return res.status(401).json({

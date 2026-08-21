@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from './client';
 
 type SkillData = {
   code: string;
@@ -6,12 +6,12 @@ type SkillData = {
 };
 
 export async function getSkills() {
-  const response = await api.get("/skills");
+  const response = await api.get('/skills');
   return response.data;
 }
 
 export async function createSkill(data: SkillData) {
-  const response = await api.post("/skills", data);
+  const response = await api.post('/skills', data);
   return response.data;
 }
 

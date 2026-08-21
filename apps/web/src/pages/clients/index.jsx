@@ -11,16 +11,9 @@ import Box from '@mui/material/Box';
 
 import MainCard from 'components/MainCard';
 
-import {
-  getClients,
-  createClient,
-  deleteClient,
-  deactivateClient
-} from 'api/clients';
-
+import { getClients, createClient, deleteClient, deactivateClient } from 'api/clients';
 
 export default function Clients() {
-
   const [clients, setClients] = useState([]);
 
   const [form, setForm] = useState({
@@ -40,29 +33,23 @@ export default function Clients() {
 
   const [message, setMessage] = useState('');
 
-
   async function loadClients() {
     try {
       const data = await getClients(page, search);
 
       setClients(data.data || []);
       setPagination(data.pagination);
-
     } catch (error) {
       console.error('Failed to load clients:', error);
     }
   }
 
-
   useEffect(() => {
     loadClients();
   }, [page, search]);
 
-
   async function handleCreateClient() {
-
     try {
-
       const result = await createClient(form);
 
       if (result.warning) {
@@ -70,7 +57,6 @@ export default function Clients() {
       } else {
         setMessage('Client created successfully');
       }
-
 
       setForm({
         name: '',
@@ -80,78 +66,44 @@ export default function Clients() {
         contactName: ''
       });
 
-
       loadClients();
-
-
     } catch (error) {
-
       console.error(error);
       setMessage('Failed to create client');
-
     }
   }
 
-
-
   async function handleDeleteClient(id) {
-
     try {
-
       await deleteClient(id);
 
       setMessage('Client deleted successfully');
 
       loadClients();
-
-
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-        error.message
-      );
-
+      setMessage(error.response?.data?.message || error.message);
     }
   }
 
-
-
   async function handleDeactivateClient(id) {
-
     try {
-
       await deactivateClient(id);
 
       setMessage('Client deactivated successfully');
 
       loadClients();
-
-
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-        error.message
-      );
-
+      setMessage(error.response?.data?.message || error.message);
     }
   }
 
-
-
   return (
-
     <MainCard>
-
       <Typography variant="h4" sx={{ mb: 3 }}>
         Clients
       </Typography>
 
-
       <Stack spacing={2} sx={{ mb: 3 }}>
-
-
         <TextField
           label="Client Name"
           value={form.name}
@@ -162,7 +114,6 @@ export default function Clients() {
             })
           }
         />
-
 
         <TextField
           label="Email"
@@ -175,7 +126,6 @@ export default function Clients() {
           }
         />
 
-
         <TextField
           label="Phone"
           value={form.phone}
@@ -186,7 +136,6 @@ export default function Clients() {
             })
           }
         />
-
 
         <TextField
           label="Address"
@@ -199,7 +148,6 @@ export default function Clients() {
           }
         />
 
-
         <TextField
           label="Contact Name"
           value={form.contactName}
@@ -211,25 +159,12 @@ export default function Clients() {
           }
         />
 
-
-        <Button
-          variant="contained"
-          onClick={handleCreateClient}
-        >
+        <Button variant="contained" onClick={handleCreateClient}>
           Create Client
         </Button>
 
-
-        {message && (
-          <Typography>
-            {message}
-          </Typography>
-        )}
-
-
+        {message && <Typography>{message}</Typography>}
       </Stack>
-
-
 
       <TextField
         label="Search clients"
@@ -241,31 +176,16 @@ export default function Clients() {
         sx={{ mb: 2 }}
       />
 
-
-
       <List>
-
         {clients.length === 0 ? (
-
           <ListItem>
             <ListItemText primary="No clients found" />
           </ListItem>
-
-
         ) : (
-
-
           clients.map((client) => (
-
-            <ListItem
-              key={client.id}
-              divider
-            >
-
+            <ListItem key={client.id} divider>
               <ListItemText
-
                 primary={client.name}
-
                 secondary={
                   <>
                     Email: {client.email || 'No email'}
@@ -275,56 +195,31 @@ export default function Clients() {
                     Status: {client.isActive ? 'Active' : 'Inactive'}
                   </>
                 }
-
               />
 
+              <Button color="error" onClick={() => handleDeleteClient(client.id)}>
+                Delete
+              </Button>
 
-              <Button
-  color="error"
-  onClick={() => handleDeleteClient(client.id)}
->
-  Delete
-</Button>
-
-{client.isActive ? (
-  <Button onClick={() => handleDeactivateClient(client.id)}>
-    Deactivate
-  </Button>
-) : (
-  <Button onClick={() => handleActivateClient(client.id)}>
-    Activate
-  </Button>
-)}
-
+              {client.isActive ? (
+                <Button onClick={() => handleDeactivateClient(client.id)}>Deactivate</Button>
+              ) : (
+                <Button onClick={() => handleActivateClient(client.id)}>Activate</Button>
+              )}
             </ListItem>
-
           ))
-
         )}
-
       </List>
 
-
-
       <Box sx={{ mt: 3 }}>
-
         <Typography>
           Page {pagination.page} of {pagination.totalPages}
         </Typography>
 
-
-        <Button
-          disabled={page >= pagination.totalPages}
-          onClick={() => setPage(page + 1)}
-        >
+        <Button disabled={page >= pagination.totalPages} onClick={() => setPage(page + 1)}>
           Next
         </Button>
-
-
       </Box>
-
-
     </MainCard>
-
   );
 }

@@ -23,4 +23,3 @@ export const listClientsQuerySchema = z.object({
 
   search: z.string().optional().default(""),
 });
-

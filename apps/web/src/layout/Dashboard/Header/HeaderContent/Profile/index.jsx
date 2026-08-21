@@ -24,9 +24,9 @@ import Transitions from 'components/@extended/Transitions';
 import IconButton from 'components/@extended/IconButton';
 
 // assets
-import { LogoutOutlined } from "@ant-design/icons";
-import { SettingOutlined } from "@ant-design/icons";
-import { UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined } from '@ant-design/icons';
+import { SettingOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 import avatar1 from 'assets/images/users/avatar-1.png';
 
 // tab panel wrapper

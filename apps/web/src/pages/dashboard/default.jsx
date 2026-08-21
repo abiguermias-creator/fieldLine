@@ -41,12 +41,7 @@ export default function DashboardDefault() {
       </Grid>
 
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <AnalyticEcommerce
-          title="Total Work Orders"
-          count={String(workOrders.length)}
-          percentage={0}
-          extra="Current"
-        />
+        <AnalyticEcommerce title="Total Work Orders" count={String(workOrders.length)} percentage={0} extra="Current" />
       </Grid>
 
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -68,12 +63,7 @@ export default function DashboardDefault() {
       </Grid>
 
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <AnalyticEcommerce
-          title="Completed"
-          count="0"
-          percentage={0}
-          extra="Status"
-        />
+        <AnalyticEcommerce title="Completed" count="0" percentage={0} extra="Status" />
       </Grid>
 
       {/* row 2 */}
@@ -84,9 +74,7 @@ export default function DashboardDefault() {
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
         <MainCard>
           <Box>
-            <Typography variant="h5">
-              Work Order Summary
-            </Typography>
+            <Typography variant="h5">Work Order Summary</Typography>
           </Box>
 
           <MonthlyBarChart />
@@ -95,9 +83,7 @@ export default function DashboardDefault() {
 
       {/* row 3 */}
       <Grid size={{ xs: 12 }}>
-        <Typography variant="h5">
-          Recent Work Orders
-        </Typography>
+        <Typography variant="h5">Recent Work Orders</Typography>
 
         <MainCard sx={{ mt: 2 }}>
           <List>
@@ -118,15 +104,9 @@ export default function DashboardDefault() {
                         <br />
                         Priority: {order.priority}
                         <br />
-                        Response target:{' '}
-                        {order.slaRespondBy
-                          ? new Date(order.slaRespondBy).toLocaleString()
-                          : 'None'}
+                        Response target: {order.slaRespondBy ? new Date(order.slaRespondBy).toLocaleString() : 'None'}
                         <br />
-                        Resolution target:{' '}
-                        {order.slaResolveBy
-                          ? new Date(order.slaResolveBy).toLocaleString()
-                          : 'None'}
+                        Resolution target: {order.slaResolveBy ? new Date(order.slaResolveBy).toLocaleString() : 'None'}
                       </>
                     }
                   />
@@ -144,34 +124,19 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
         <MainCard sx={{ mt: 2 }}>
-          <Typography variant="h5">
-            Analytics Report
-          </Typography>
+          <Typography variant="h5">Analytics Report</Typography>
 
           <List>
             <ListItem divider>
-              <ListItemText
-                primary="Active Work Orders"
-                secondary={workOrders.length}
-              />
+              <ListItemText primary="Active Work Orders" secondary={workOrders.length} />
             </ListItem>
 
             <ListItem divider>
-              <ListItemText
-                primary="High Priority Orders"
-                secondary={
-                  workOrders.filter(
-                    (order) => order.priority === 'HIGH'
-                  ).length
-                }
-              />
+              <ListItemText primary="High Priority Orders" secondary={workOrders.filter((order) => order.priority === 'HIGH').length} />
             </ListItem>
 
             <ListItem>
-              <ListItemText
-                primary="Current Status"
-                secondary="Connected to Backend API"
-              />
+              <ListItemText primary="Current Status" secondary="Connected to Backend API" />
             </ListItem>
           </List>
 

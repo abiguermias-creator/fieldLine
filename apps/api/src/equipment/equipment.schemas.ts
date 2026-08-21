@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 export const createEquipmentSchema = z.object({
-  code: z
-    .string()
-    .min(1, "Equipment code is required")
-    .max(50, "Equipment code is too long"),
+  code: z.string().min(1, "Equipment code is required").max(50, "Equipment code is too long"),
 
   name: z
     .string()

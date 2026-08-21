@@ -10,7 +10,9 @@ import {
   getWorkOrders,
   updateWorkOrder,
   cancelWorkOrder,
+  unassignWorkOrder,
   createFollowUpWorkOrder,
+  getAssignmentOptions,
 } from "./work-order.service.js";
 
 import {
@@ -19,12 +21,10 @@ import {
   listWorkOrderQuerySchema,
   updateWorkOrderSchema,
   cancelWorkOrderSchema,
+  unassignWorkOrderSchema
 } from "./work-order.schemas.js";
 
-export async function createWorkOrderController(
-  req: Request,
-  res: Response
-) {
+export async function createWorkOrderController(req: Request, res: Response) {
   try {
     const data = createWorkOrderSchema.parse(req.body);
 
@@ -40,8 +40,7 @@ export async function createWorkOrderController(
 
       if (typedError.code === "POSSIBLE_DUPLICATE") {
         return res.status(409).json({
-          message:
-            "A possible duplicate work order was found.",
+          message: "A possible duplicate work order was found.",
           duplicate: typedError.duplicate,
         });
       }
@@ -52,10 +51,7 @@ export async function createWorkOrderController(
         });
       }
 
-      if (
-        error.message ===
-        "Site does not belong to the selected client"
-      ) {
+      if (error.message === "Site does not belong to the selected client") {
         return res.status(400).json({
           message: error.message,
         });
@@ -72,10 +68,7 @@ export async function createWorkOrderController(
   }
 }
 
-export async function getWorkOrdersController(
-  req: Request,
-  res: Response
-) {
+export async function getWorkOrdersController(req: Request, res: Response) {
   const query = listWorkOrderQuerySchema.parse(req.query);
 
   const result = await getWorkOrders(query);
@@ -83,10 +76,7 @@ export async function getWorkOrdersController(
   res.json(result);
 }
 
-export async function getWorkOrderController(
-  req: Request,
-  res: Response
-) {
+export async function getWorkOrderController(req: Request, res: Response) {
   const workOrder = await getWorkOrderById(req.params.id as string);
 
   if (!workOrder) {
@@ -98,10 +88,7 @@ export async function getWorkOrderController(
   res.json(workOrder);
 }
 
-export async function updateWorkOrderController(
-  req: AuthRequest,
-  res: Response
-) {
+export async function updateWorkOrderController(req: AuthRequest, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -111,26 +98,168 @@ export async function updateWorkOrderController(
 
     const data = updateWorkOrderSchema.parse(req.body);
 
-    const workOrder = await updateWorkOrder(
-      req.params.id as string,
-      data,
-      req.user.userId
-    );
+    const workOrder = await updateWorkOrder(req.params.id as string, data, req.user.userId);
 
     res.json(workOrder);
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message === "Closed or cancelled work orders cannot be edited") {
+  return res.status(409).json({
+    message: error.message,
+  });
+}
+
+if (
+  error.message.startsWith("SKILL_NOT_HELD:") ||
+  error.message.startsWith("SKILL_EXPIRED:")
+) {
+  const [code, ...messageParts] =
+    error.message.split(": ");
+
+  return res.status(409).json({
+    code,
+    message: messageParts.join(": "),
+  });
+}
+
+if (
+  error.message.startsWith("TECHNICIAN_UNAVAILABLE:")
+) {
+  const [code, ...messageParts] =
+    error.message.split(": ");
+
+  return res.status(409).json({
+    code,
+    message: messageParts.join(": "),
+  });
+}
+
+if (
+  error.message.startsWith(
+    "TECHNICIAN_UNAVAILABLE:",
+  )
+) {
+  const [code, ...messageParts] =
+    error.message.split(": ");
+
+  return res.status(409).json({
+    code,
+    message:
+      messageParts.join(": "),
+  });
+}
+
+if (error.message === "Technician not found") {
+  return res.status(404).json({
+    message: error.message,
+  });
+}
+
+if (
+  error.message === "Selected user is not a technician" ||
+  error.message === "Technician account is inactive"
+) {
+  return res.status(409).json({
+    message: error.message,
+  });
+}
+
+if (error.message === "SCHEDULE_IN_PAST") {
+  return res.status(400).json({
+    code: "SCHEDULE_IN_PAST",
+    message: "Scheduled start cannot be in the past",
+  });
+}
+
+if (
+  error.message.startsWith(
+    "DAILY_HOURS_EXCEEDED:",
+  )
+) {
+  const [code, ...messageParts] =
+    error.message.split(": ");
+
+  return res.status(409).json({
+    code,
+    message:
+      messageParts.join(": "),
+  });
+}
+
+if (
+  error.message ===
+  "DAILY_HOURS_OVERRIDE_REQUIRES_SUPERVISOR"
+) {
+  return res.status(403).json({
+    code:
+      "DAILY_HOURS_OVERRIDE_REQUIRES_SUPERVISOR",
+    message:
+      "Only a supervisor can override daily working hours",
+  });
+}
+
+return res.status(400).json({
+  message: error.message,
+});
+    }
+
+    return res.status(500).json({
+      message: "Failed to update work order",
+    });
+  }
+}
+
+export async function unassignWorkOrderController(
+  req: AuthRequest,
+  res: Response,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const data = unassignWorkOrderSchema.parse(req.body);
+
+    const workOrder = await unassignWorkOrder(
+      req.params.id as string,
+      data.reason,
+      req.user.userId,
+      req.user.role,
+    );
+
+    res.json(workOrder);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message:
+          error.issues[0]?.message ||
+          "Invalid unassignment request",
+      });
+    }
+
+    if (error instanceof Error) {
+      if (error.message === "Work order not found") {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
       if (
         error.message ===
-        "Closed or cancelled work orders cannot be edited"
+        "Work order is not assigned to a technician"
       ) {
         return res.status(409).json({
           message: error.message,
         });
       }
 
-      if (error.message === "Work order not found") {
-        return res.status(404).json({
+      if (
+        error.message ===
+        "IN_PROGRESS work orders can only be unassigned by a supervisor"
+      ) {
+        return res.status(403).json({
           message: error.message,
         });
       }
@@ -141,15 +270,12 @@ export async function updateWorkOrderController(
     }
 
     return res.status(500).json({
-      message: "Failed to update work order",
+      message: "Failed to unassign work order",
     });
   }
 }
 
-export async function cancelWorkOrderController(
-  req: AuthRequest,
-  res: Response
-) {
+export async function cancelWorkOrderController(req: AuthRequest, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -157,31 +283,22 @@ export async function cancelWorkOrderController(
       });
     }
 
-    const data = cancelWorkOrderSchema.parse(
-      req.body
-    );
+    const data = cancelWorkOrderSchema.parse(req.body);
 
-    const workOrder = await cancelWorkOrder(
-      req.params.id as string,
-      data.reason,
-      req.user.userId
-    );
+    const workOrder = await cancelWorkOrder(req.params.id as string, data.reason, req.user.userId);
 
     res.json(workOrder);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
-        message: error.issues[0]?.message ||
-          "Invalid cancellation request",
+        message: error.issues[0]?.message || "Invalid cancellation request",
       });
     }
 
     if (error instanceof Error) {
       if (
-        error.message ===
-          "Completed work orders cannot be cancelled" ||
-        error.message ===
-          "Closed or cancelled work orders cannot be cancelled"
+        error.message === "Completed work orders cannot be cancelled" ||
+        error.message === "Closed or cancelled work orders cannot be cancelled"
       ) {
         return res.status(409).json({
           message: error.message,
@@ -205,18 +322,12 @@ export async function cancelWorkOrderController(
   }
 }
 
-export async function deleteWorkOrderController(
-  req: Request,
-  res: Response
-) {
+export async function deleteWorkOrderController(req: Request, res: Response) {
   await deleteWorkOrder(req.params.id as string);
 
   res.status(204).send();
 }
-export async function createClientRequestController(
-  req: AuthRequest,
-  res: Response
-) {
+export async function createClientRequestController(req: AuthRequest, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -226,10 +337,7 @@ export async function createClientRequestController(
 
     const data = createClientRequestSchema.parse(req.body);
 
-    const workOrder = await createClientRequest(
-      req.user.userId,
-      data
-    );
+    const workOrder = await createClientRequest(req.user.userId, data);
 
     res.status(201).json(workOrder);
   } catch (error) {
@@ -258,10 +366,7 @@ export async function createClientRequestController(
   }
 }
 
-export async function createFollowUpWorkOrderController(
-  req: AuthRequest,
-  res: Response
-) {
+export async function createFollowUpWorkOrderController(req: AuthRequest, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -269,10 +374,7 @@ export async function createFollowUpWorkOrderController(
       });
     }
 
-    const workOrder =
-      await createFollowUpWorkOrder(
-        req.params.id as string
-      );
+    const workOrder = await createFollowUpWorkOrder(req.params.id as string);
 
     res.status(201).json(workOrder);
   } catch (error) {
@@ -284,10 +386,8 @@ export async function createFollowUpWorkOrderController(
       }
 
       if (
-        error.message ===
-          "Only closed work orders can have a follow-up" ||
-        error.message ===
-          "This work order already has a follow-up"
+        error.message === "Only closed work orders can have a follow-up" ||
+        error.message === "This work order already has a follow-up"
       ) {
         return res.status(409).json({
           message: error.message,
@@ -301,6 +401,35 @@ export async function createFollowUpWorkOrderController(
 
     return res.status(500).json({
       message: "Failed to create follow-up work order",
+    });
+  }
+}
+
+export async function getAssignmentOptionsController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const result = await getAssignmentOptions(
+      req.params.id as string,
+    );
+
+    res.json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "Work order not found") {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to get assignment options",
     });
   }
 }

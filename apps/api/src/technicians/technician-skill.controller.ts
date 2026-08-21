@@ -11,10 +11,7 @@ import {
   technicianSkillParamsSchema,
 } from "./technician-skill.schemas.js";
 
-export async function addTechnicianSkillController(
-  req: Request,
-  res: Response
-) {
+export async function addTechnicianSkillController(req: Request, res: Response) {
   try {
     const { technicianId } = technicianSkillParamsSchema
       .pick({ technicianId: true })
@@ -36,10 +33,7 @@ export async function addTechnicianSkillController(
   }
 }
 
-export async function getTechnicianSkillsController(
-  req: Request,
-  res: Response
-) {
+export async function getTechnicianSkillsController(req: Request, res: Response) {
   try {
     const { technicianId } = technicianSkillParamsSchema
       .pick({ technicianId: true })
@@ -55,13 +49,9 @@ export async function getTechnicianSkillsController(
   }
 }
 
-export async function removeTechnicianSkillController(
-  req: Request,
-  res: Response
-) {
+export async function removeTechnicianSkillController(req: Request, res: Response) {
   try {
-    const { technicianId, skillId } =
-      technicianSkillParamsSchema.parse(req.params);
+    const { technicianId, skillId } = technicianSkillParamsSchema.parse(req.params);
 
     await removeTechnicianSkill(technicianId, skillId);
 

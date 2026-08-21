@@ -16,40 +16,24 @@ const router = Router();
 
 router.use(requireAuth);
 
-router.post(
-  "/",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  createTechnicianController
-);
+router.post("/", requireRole("DISPATCHER", "SUPERVISOR"), createTechnicianController);
 
-router.get(
-  "/",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  getTechniciansController
-);
+router.get("/", requireRole("DISPATCHER", "SUPERVISOR"), getTechniciansController);
 
-router.get(
-  "/:id",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  getTechnicianController
-);
+router.get("/:id", requireRole("DISPATCHER", "SUPERVISOR"), getTechnicianController);
 
-router.patch(
-  "/:id",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  updateTechnicianController
-);
+router.patch("/:id", requireRole("DISPATCHER", "SUPERVISOR"), updateTechnicianController);
 
 router.patch(
   "/:id/deactivate",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  deactivateTechnicianController
+  deactivateTechnicianController,
 );
 
 router.patch(
   "/:id/activate",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  activateTechnicianController
+  activateTechnicianController,
 );
 
 export default router;

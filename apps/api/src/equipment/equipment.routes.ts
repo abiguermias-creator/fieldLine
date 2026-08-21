@@ -17,46 +17,22 @@ const router = Router();
 
 router.use(requireAuth);
 
-router.post(
-  "/",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  createEquipmentController
-);
+router.post("/", requireRole("DISPATCHER", "SUPERVISOR"), createEquipmentController);
 
-router.get(
-  "/",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  getEquipmentController
-);
+router.get("/", requireRole("DISPATCHER", "SUPERVISOR"), getEquipmentController);
 
-router.get(
-  "/:id",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  getEquipmentByIdController
-);
+router.get("/:id", requireRole("DISPATCHER", "SUPERVISOR"), getEquipmentByIdController);
 
-router.patch(
-  "/:id",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  updateEquipmentController
-);
+router.patch("/:id", requireRole("DISPATCHER", "SUPERVISOR"), updateEquipmentController);
 
-router.delete(
-  "/:id",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  deleteEquipmentController
-);
+router.delete("/:id", requireRole("DISPATCHER", "SUPERVISOR"), deleteEquipmentController);
 
 router.patch(
   "/:id/deactivate",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  deactivateEquipmentController
+  deactivateEquipmentController,
 );
 
-router.patch(
-  "/:id/activate",
-  requireRole("DISPATCHER", "SUPERVISOR"),
-  activateEquipmentController
-);
+router.patch("/:id/activate", requireRole("DISPATCHER", "SUPERVISOR"), activateEquipmentController);
 
 export default router;

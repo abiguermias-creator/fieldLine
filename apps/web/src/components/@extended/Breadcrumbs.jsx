@@ -14,11 +14,7 @@ import MainCard from 'components/MainCard';
 import navigation from 'menu-items';
 
 // assets
-import {
-  ApartmentOutlined,
-  HomeOutlined,
-  HomeFilled
-} from "@ant-design/icons";
+import { ApartmentOutlined, HomeOutlined, HomeFilled } from '@ant-design/icons';
 export default function Breadcrumbs({
   card = false,
   custom = false,

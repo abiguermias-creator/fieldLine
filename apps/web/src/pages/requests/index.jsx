@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import {
-  Alert,
-  Button,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Alert, Button, FormControl, FormHelperText, InputLabel, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 
 import MainCard from 'components/MainCard';
 import { getSites } from 'api/site';
@@ -124,10 +113,7 @@ export default function ClientRequest() {
         return;
       }
 
-      setError(
-        responseData?.message ||
-          'Failed to submit request.'
-      );
+      setError(responseData?.message || 'Failed to submit request.');
     } finally {
       setLoading(false);
     }
@@ -151,9 +137,7 @@ export default function ClientRequest() {
     }
 
     if (priority === 'P1' && !p1Confirmed) {
-      setError(
-        'P1 is an emergency priority. Please confirm the P1 requirement before submitting.'
-      );
+      setError('P1 is an emergency priority. Please confirm the P1 requirement before submitting.');
       return;
     }
 
@@ -176,27 +160,15 @@ export default function ClientRequest() {
     );
   }
 
-  const selectedPriority = priorityOptions.find(
-    (option) => option.value === priority
-  );
+  const selectedPriority = priorityOptions.find((option) => option.value === priority);
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h4">
-        Create Service Request
-      </Typography>
+      <Typography variant="h4">Create Service Request</Typography>
 
-      {error && (
-        <Alert severity="error">
-          {error}
-        </Alert>
-      )}
+      {error && <Alert severity="error">{error}</Alert>}
 
-      {message && (
-        <Alert severity="success">
-          {message}
-        </Alert>
-      )}
+      {message && <Alert severity="success">{message}</Alert>}
 
       {possibleDuplicate && (
         <Alert severity="warning">
@@ -205,65 +177,37 @@ export default function ClientRequest() {
           </Typography>
 
           <Typography variant="body2">
-            We found an existing work order at this site with a
-            similar title created recently. Is this the same problem?
+            We found an existing work order at this site with a similar title created recently. Is this the same problem?
           </Typography>
 
           <Stack spacing={1} sx={{ mt: 2 }}>
             <Typography variant="body2">
-              <strong>
-                Reference:
-              </strong>{' '}
-              {possibleDuplicate.reference || 'Unknown'}
+              <strong>Reference:</strong> {possibleDuplicate.reference || 'Unknown'}
             </Typography>
 
             <Typography variant="body2">
-              <strong>
-                Title:
-              </strong>{' '}
-              {possibleDuplicate.title || 'Unknown'}
+              <strong>Title:</strong> {possibleDuplicate.title || 'Unknown'}
             </Typography>
 
             {possibleDuplicate.status && (
               <Typography variant="body2">
-                <strong>
-                  Status:
-                </strong>{' '}
-                {possibleDuplicate.status}
+                <strong>Status:</strong> {possibleDuplicate.status}
               </Typography>
             )}
 
             {possibleDuplicate.createdAt && (
               <Typography variant="body2">
-                <strong>
-                  Created:
-                </strong>{' '}
-                {new Date(
-                  possibleDuplicate.createdAt
-                ).toLocaleString()}
+                <strong>Created:</strong> {new Date(possibleDuplicate.createdAt).toLocaleString()}
               </Typography>
             )}
           </Stack>
 
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ mt: 2 }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSameProblem}
-              disabled={loading}
-            >
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button variant="contained" color="primary" onClick={handleSameProblem} disabled={loading}>
               Same problem
             </Button>
 
-            <Button
-              variant="outlined"
-              onClick={handleDifferentProblem}
-              disabled={loading}
-            >
+            <Button variant="outlined" onClick={handleDifferentProblem} disabled={loading}>
               Different problem
             </Button>
           </Stack>
@@ -272,17 +216,13 @@ export default function ClientRequest() {
 
       {createdRequest && (
         <Alert severity="success">
-          <strong>
-            Reference: {createdRequest.reference}
-          </strong>
+          <strong>Reference: {createdRequest.reference}</strong>
 
           {createdRequest.responseTarget && (
             <>
               <br />
               Response target:{' '}
-              {new Date(
-                createdRequest.responseTarget
-              ).toLocaleTimeString([], {
+              {new Date(createdRequest.responseTarget).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit'
               })}
@@ -294,41 +234,24 @@ export default function ClientRequest() {
       <MainCard title="New Service Request">
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
-            <FormControl
-              fullWidth
-              required
-              disabled={loadingSites}
-            >
+            <FormControl fullWidth required disabled={loadingSites}>
               <InputLabel>Site</InputLabel>
 
-              <Select
-                value={siteId}
-                label="Site"
-                onChange={(event) =>
-                  setSiteId(event.target.value)
-                }
-              >
+              <Select value={siteId} label="Site" onChange={(event) => setSiteId(event.target.value)}>
                 {sites.map((site) => (
-                  <MenuItem
-                    key={site.id}
-                    value={site.id}
-                  >
+                  <MenuItem key={site.id} value={site.id}>
                     {site.name}
                   </MenuItem>
                 ))}
               </Select>
 
-              <FormHelperText>
-                Only sites belonging to your company are available.
-              </FormHelperText>
+              <FormHelperText>Only sites belonging to your company are available.</FormHelperText>
             </FormControl>
 
             <TextField
               label="Title"
               value={title}
-              onChange={(event) =>
-                setTitle(event.target.value)
-              }
+              onChange={(event) => setTitle(event.target.value)}
               required
               fullWidth
               inputProps={{ maxLength: 200 }}
@@ -338,9 +261,7 @@ export default function ClientRequest() {
             <TextField
               label="Description"
               value={description}
-              onChange={(event) =>
-                setDescription(event.target.value)
-              }
+              onChange={(event) => setDescription(event.target.value)}
               multiline
               rows={4}
               fullWidth
@@ -349,16 +270,9 @@ export default function ClientRequest() {
             <FormControl fullWidth required>
               <InputLabel>Priority</InputLabel>
 
-              <Select
-                value={priority}
-                label="Priority"
-                onChange={handlePriorityChange}
-              >
+              <Select value={priority} label="Priority" onChange={handlePriorityChange}>
                 {priorityOptions.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    value={option.value}
-                  >
+                  <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
                 ))}
@@ -366,8 +280,7 @@ export default function ClientRequest() {
 
               {selectedPriority && (
                 <FormHelperText>
-                  {selectedPriority.description}{' '}
-                  {selectedPriority.target}
+                  {selectedPriority.description} {selectedPriority.target}
                 </FormHelperText>
               )}
             </FormControl>
@@ -377,39 +290,22 @@ export default function ClientRequest() {
                 <Typography variant="body2">
                   <strong>P1 means Emergency.</strong>
                   <br />
-                  Use P1 only when the issue requires immediate
-                  attention. The response target is within 1 hour.
+                  Use P1 only when the issue requires immediate attention. The response target is within 1 hour.
                 </Typography>
 
                 <Button
                   type="button"
-                  variant={
-                    p1Confirmed ? 'outlined' : 'contained'
-                  }
+                  variant={p1Confirmed ? 'outlined' : 'contained'}
                   sx={{ mt: 2 }}
-                  onClick={() =>
-                    setP1Confirmed(!p1Confirmed)
-                  }
+                  onClick={() => setP1Confirmed(!p1Confirmed)}
                 >
-                  {p1Confirmed
-                    ? 'P1 Confirmed'
-                    : 'Confirm P1 Emergency'}
+                  {p1Confirmed ? 'P1 Confirmed' : 'Confirm P1 Emergency'}
                 </Button>
               </Alert>
             )}
 
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={
-                loading ||
-                loadingSites ||
-                (priority === 'P1' && !p1Confirmed)
-              }
-            >
-              {loading
-                ? 'Submitting...'
-                : 'Submit Request'}
+            <Button type="submit" variant="contained" disabled={loading || loadingSites || (priority === 'P1' && !p1Confirmed)}>
+              {loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </Stack>
         </form>
