@@ -3,25 +3,16 @@ import { z } from "zod";
 export const createSiteSchema = z.object({
   clientId: z.string().uuid(),
 
-  name: z.string()
-    .min(2)
-    .max(100),
+  name: z.string().min(2).max(100),
 
-  address: z.string()
-    .min(1, "Address is required"),
+  address: z.string().min(1, "Address is required"),
 
-  city: z.string()
-    .min(2)
-    .max(100),
+  city: z.string().min(2).max(100),
 
-  accessNotes: z.string()
-    .optional(),
+  accessNotes: z.string().optional(),
 });
 
-
-export const updateSiteSchema =
-  createSiteSchema.partial();
-
+export const updateSiteSchema = createSiteSchema.partial();
 
 export const siteIdSchema = z.object({
   id: z.string().uuid(),

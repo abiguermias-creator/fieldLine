@@ -28,9 +28,7 @@ export async function createTechnician(data: {
   });
 
   if (existingEmployee) {
-    throw new Error(
-      `A technician with employee code "${data.employeeCode}" already exists.`
-    );
+    throw new Error(`A technician with employee code "${data.employeeCode}" already exists.`);
   }
 
   const passwordHash = await argon2.hash(data.password);
@@ -50,8 +48,7 @@ export async function createTechnician(data: {
         userId: user.id,
         employeeCode: data.employeeCode,
         baseLocation: data.baseLocation,
-        maxWorkingMinutesPerDay:
-          data.maxWorkingMinutesPerDay ?? 480,
+        maxWorkingMinutesPerDay: data.maxWorkingMinutesPerDay ?? 480,
         phone: data.phone,
         bio: data.bio,
       },
@@ -72,59 +69,54 @@ export async function createTechnician(data: {
   });
 }
 
-export async function getTechnicians(
-  page = 1,
-  limit = 25,
-  search = "",
-  skillId?: string
-) {
+export async function getTechnicians(page = 1, limit = 25, search = "", skillId?: string) {
   const skip = (page - 1) * limit;
 
   const where = {
-  ...(search
-    ? {
-        OR: [
-          {
-            employeeCode: {
-              contains: search,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            baseLocation: {
-              contains: search,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            user: {
-              fullName: {
+    ...(search
+      ? {
+          OR: [
+            {
+              employeeCode: {
                 contains: search,
                 mode: "insensitive" as const,
               },
             },
-          },
-          {
-            user: {
-              email: {
+            {
+              baseLocation: {
                 contains: search,
                 mode: "insensitive" as const,
               },
             },
+            {
+              user: {
+                fullName: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+            {
+              user: {
+                email: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(skillId
+      ? {
+          technicianSkills: {
+            some: {
+              skillId,
+            },
           },
-        ],
-      }
-    : {}),
-  ...(skillId
-    ? {
-        technicianSkills: {
-          some: {
-            skillId,
-          },
-        },
-      }
-    : {}),
-};
+        }
+      : {}),
+  };
 
   const [items, total] = await Promise.all([
     prisma.technicianProfile.findMany({
@@ -200,7 +192,7 @@ export async function updateTechnician(
     maxWorkingMinutesPerDay?: number;
     phone?: string;
     bio?: string;
-  }
+  },
 ) {
   const technician = await prisma.technicianProfile.findUnique({
     where: {
@@ -213,17 +205,14 @@ export async function updateTechnician(
   }
 
   if (data.employeeCode && data.employeeCode !== technician.employeeCode) {
-    const existingEmployee =
-      await prisma.technicianProfile.findUnique({
-        where: {
-          employeeCode: data.employeeCode,
-        },
-      });
+    const existingEmployee = await prisma.technicianProfile.findUnique({
+      where: {
+        employeeCode: data.employeeCode,
+      },
+    });
 
     if (existingEmployee) {
-      throw new Error(
-        `A technician with employee code "${data.employeeCode}" already exists.`
-      );
+      throw new Error(`A technician with employee code "${data.employeeCode}" already exists.`);
     }
   }
 
@@ -235,8 +224,7 @@ export async function updateTechnician(
       data: {
         employeeCode: data.employeeCode,
         baseLocation: data.baseLocation,
-        maxWorkingMinutesPerDay:
-          data.maxWorkingMinutesPerDay,
+        maxWorkingMinutesPerDay: data.maxWorkingMinutesPerDay,
         phone: data.phone,
         bio: data.bio,
       },
@@ -299,7 +287,7 @@ export async function deactivateTechnician(id: string) {
     throw new Error(
       `Cannot deactivate technician. They have ${futureAssignments} future assignment${
         futureAssignments === 1 ? "" : "s"
-      }. Reassign them first.`
+      }. Reassign them first.`,
     );
   }
 

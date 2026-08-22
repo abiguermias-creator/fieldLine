@@ -77,10 +77,7 @@ export async function getTechnicianSkills(technicianId: string) {
   }));
 }
 
-export async function removeTechnicianSkill(
-  technicianId: string,
-  skillId: string
-) {
+export async function removeTechnicianSkill(technicianId: string, skillId: string) {
   const existing = await prisma.technicianSkill.findUnique({
     where: {
       technicianId_skillId: {

@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from './client';
 
 type SiteData = {
   clientId?: string;
@@ -14,12 +14,12 @@ type SiteCoordinates = {
 };
 
 export async function getSites() {
-  const response = await api.get("/sites");
+  const response = await api.get('/sites');
   return response.data;
 }
 
 export async function createSite(data: SiteData) {
-  const response = await api.post("/sites", data);
+  const response = await api.post('/sites', data);
   return response.data;
 }
 
@@ -38,14 +38,8 @@ export async function deactivateSite(id: string) {
   return response.data;
 }
 
-export async function updateSiteLocation(
-  id: string,
-  coordinates: SiteCoordinates
-) {
-  const response = await api.patch(
-    `/sites/${id}/location`,
-    coordinates
-  );
+export async function updateSiteLocation(id: string, coordinates: SiteCoordinates) {
+  const response = await api.patch(`/sites/${id}/location`, coordinates);
 
   return response.data;
 }

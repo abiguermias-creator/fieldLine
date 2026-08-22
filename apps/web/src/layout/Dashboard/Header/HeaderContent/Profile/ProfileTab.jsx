@@ -4,20 +4,19 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 
-import { useAuth } from "contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from 'contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // assets
-import { EditOutlined } from "@ant-design/icons";
-import { ProfileOutlined } from "@ant-design/icons";
-import { LogoutOutlined } from "@ant-design/icons";
-import { UserOutlined } from "@ant-design/icons";
-import { WalletOutlined } from "@ant-design/icons";
+import { EditOutlined } from '@ant-design/icons';
+import { ProfileOutlined } from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
+import { WalletOutlined } from '@ant-design/icons';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab() {
-
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -42,7 +41,7 @@ export default function ProfileTab() {
         </ListItemIcon>
         <ListItemText primary="Social Profile" />
       </ListItemButton>
-            <ListItemButton>
+      <ListItemButton>
         <ListItemIcon>
           <WalletOutlined />
         </ListItemIcon>
@@ -52,7 +51,7 @@ export default function ProfileTab() {
       <ListItemButton
         onClick={async () => {
           await logout();
-          navigate("/free/login");
+          navigate('/free/login');
         }}
       >
         <ListItemIcon>

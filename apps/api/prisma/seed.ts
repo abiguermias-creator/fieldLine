@@ -7,7 +7,7 @@ async function main() {
   const passwordHash = await argon2.hash("password123");
 
   // Dispatcher User
-   const user = await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: {
       email: "admin@fieldline.com",
     },
@@ -26,9 +26,8 @@ async function main() {
     },
   });
 
- 
   // Technician Profile
-    const technicianProfile = await prisma.technicianProfile.upsert({
+  const technicianProfile = await prisma.technicianProfile.upsert({
     where: {
       userId: user.id,
     },
@@ -47,7 +46,6 @@ async function main() {
     },
   });
 
-  
   // Client
 
   let client = await prisma.client.findFirst({
@@ -70,30 +68,29 @@ async function main() {
   }
 
   // Client User
-await prisma.user.upsert({
-  where: {
-    email: "client@abc.com",
-  },
-  update: {
-    passwordHash,
-    fullName: "ABC Company Contact",
-    role: UserRole.CLIENT,
-    clientId: client.id,
-    isActive: true,
-  },
-  create: {
-    email: "client@abc.com",
-    passwordHash,
-    fullName: "ABC Company Contact",
-    role: UserRole.CLIENT,
-    clientId: client.id,
-    isActive: true,
-  },
-});
+  await prisma.user.upsert({
+    where: {
+      email: "client@abc.com",
+    },
+    update: {
+      passwordHash,
+      fullName: "ABC Company Contact",
+      role: UserRole.CLIENT,
+      clientId: client.id,
+      isActive: true,
+    },
+    create: {
+      email: "client@abc.com",
+      passwordHash,
+      fullName: "ABC Company Contact",
+      role: UserRole.CLIENT,
+      clientId: client.id,
+      isActive: true,
+    },
+  });
 
-  
   // Site
-    let site = await prisma.site.findFirst({
+  let site = await prisma.site.findFirst({
     where: {
       clientId: client.id,
       name: "Main Office",
@@ -114,8 +111,8 @@ await prisma.user.upsert({
     });
   }
 
-   // Skills
-   const electricalSkill = await prisma.skill.upsert({
+  // Skills
+  const electricalSkill = await prisma.skill.upsert({
     where: {
       name: "Electrical Repair",
     },
@@ -141,9 +138,8 @@ await prisma.user.upsert({
     },
   });
 
-  
   // Equipment
-   const equipment = await prisma.equipment.upsert({
+  const equipment = await prisma.equipment.upsert({
     where: {
       code: "EQ-001",
     },
@@ -164,9 +160,8 @@ await prisma.user.upsert({
     },
   });
 
-  
   // Technician Skills
-   await prisma.technicianSkill.upsert({
+  await prisma.technicianSkill.upsert({
     where: {
       technicianId_skillId: {
         technicianId: technicianProfile.id,
@@ -194,9 +189,8 @@ await prisma.user.upsert({
     },
   });
 
-  
   // Work Order
- const existingWorkOrder = await prisma.workOrder.findUnique({
+  const existingWorkOrder = await prisma.workOrder.findUnique({
     where: {
       reference: "WO-2026-0001",
     },
@@ -218,9 +212,8 @@ await prisma.user.upsert({
     });
   }
 
-
   // Work Order Sequence
-   await prisma.workOrderSequence.upsert({
+  await prisma.workOrderSequence.upsert({
     where: {
       year: 2026,
     },

@@ -83,7 +83,7 @@ export async function updateClient(
     phone?: string;
     address?: string;
     contactName?: string;
-  }
+  },
 ) {
   return prisma.client.update({
     where: { id },
@@ -100,7 +100,7 @@ export async function deleteClient(id: string) {
 
   if (workOrderCount > 0) {
     throw new Error(
-      `Cannot delete client. It has ${workOrderCount} work orders. Deactivate instead.`
+      `Cannot delete client. It has ${workOrderCount} work orders. Deactivate instead.`,
     );
   }
 

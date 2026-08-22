@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from './client';
 
 export type EquipmentData = {
   code: string;
@@ -8,7 +8,7 @@ export type EquipmentData = {
 };
 
 export async function getEquipment() {
-  const response = await api.get("/equipment");
+  const response = await api.get('/equipment');
   return response.data;
 }
 
@@ -18,14 +18,11 @@ export async function getEquipmentById(id: string) {
 }
 
 export async function createEquipment(data: EquipmentData) {
-  const response = await api.post("/equipment", data);
+  const response = await api.post('/equipment', data);
   return response.data;
 }
 
-export async function updateEquipment(
-  id: string,
-  data: Partial<EquipmentData>
-) {
+export async function updateEquipment(id: string, data: Partial<EquipmentData>) {
   const response = await api.patch(`/equipment/${id}`, data);
   return response.data;
 }

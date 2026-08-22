@@ -5,7 +5,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Box from '@mui/material/Box';
 
 // assets
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined } from '@ant-design/icons';
 
 // ==============================|| HEADER CONTENT - SEARCH ||============================== //
 

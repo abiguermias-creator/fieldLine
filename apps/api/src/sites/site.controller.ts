@@ -16,20 +16,13 @@ import {
   siteLocationSchema,
 } from "./site.schemas.js";
 
-import type
- { AuthRequest } 
- from "../middleware/auth.js";
-
+import type { AuthRequest } from "../middleware/auth.js";
 
 type SiteParams = {
   id: string;
 };
 
-
-export async function createSiteController(
-  req: Request,
-  res: Response
-) {
+export async function createSiteController(req: Request, res: Response) {
   const data = createSiteSchema.parse(req.body);
 
   const site = await createSite(data);
@@ -37,26 +30,14 @@ export async function createSiteController(
   res.status(201).json(site);
 }
 
-
-
-export async function getSitesController(
-  req: AuthRequest,
-  res: Response
-) {
+export async function getSitesController(req: AuthRequest, res: Response) {
   const sites = await getSites(req.user);
 
   res.json(sites);
 }
 
-
-
-export async function getSiteController(
-  req: Request<SiteParams>,
-  res: Response
-) {
-  const site = await getSiteById(
-    req.params.id
-  );
+export async function getSiteController(req: Request<SiteParams>, res: Response) {
+  const site = await getSiteById(req.params.id);
 
   if (!site) {
     return res.status(404).json({
@@ -67,80 +48,41 @@ export async function getSiteController(
   res.json(site);
 }
 
+export async function updateSiteController(req: Request<SiteParams>, res: Response) {
+  const data = updateSiteSchema.parse(req.body);
 
-
-export async function updateSiteController(
-  req: Request<SiteParams>,
-  res: Response
-) {
-  const data = updateSiteSchema.parse(
-    req.body
-  );
-
-  const site = await updateSite(
-    req.params.id,
-    data
-  );
+  const site = await updateSite(req.params.id, data);
 
   res.json(site);
 }
 
-
-
-export async function deleteSiteController(
-  req: Request<SiteParams>,
-  res: Response
-) {
-
+export async function deleteSiteController(req: Request<SiteParams>, res: Response) {
   try {
-
-    const site = await deleteSite(
-      req.params.id
-    );
+    const site = await deleteSite(req.params.id);
 
     res.status(200).json(site);
-
-  } catch(error:any){
-
+  } catch (error: any) {
     res.status(400).json({
-      message:error.message,
+      message: error.message,
     });
-
   }
-
 }
 
-
-
-export async function deactivateSiteController(
-  req: Request<SiteParams>,
-  res: Response
-) {
-
-  const site = await deactivateSite(
-    req.params.id
-  );
+export async function deactivateSiteController(req: Request<SiteParams>, res: Response) {
+  const site = await deactivateSite(req.params.id);
 
   res.json(site);
-
 }
 
-export async function updateSiteLocationController(
-  req: Request,
-  res: Response
-) {
+export async function updateSiteLocationController(req: Request, res: Response) {
   const { id } = siteIdSchema.parse(req.params);
 
-  const { latitude, longitude } =
-    siteLocationSchema.parse(req.body);
+  const { latitude, longitude } = siteLocationSchema.parse(req.body);
 
-  const site = await updateSiteLocation(
-    id,
-    {
-      latitude,
-      longitude,
-    }
-  );
+  const site = await updateSiteLocation(id, {
+    latitude,
+    longitude,
+  });
 
   res.json(site);
 }

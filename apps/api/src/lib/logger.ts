@@ -3,10 +3,5 @@ import { config } from "./config.js";
 
 export const logger = pino({
   level: config.LOG_LEVEL,
-  redact: [
-    "req.headers.authorization",
-    "req.headers.cookie",
-    "*.password",
-    "*.passwordHash",
-  ],
+  redact: ["req.headers.authorization", "req.headers.cookie", "*.password", "*.passwordHash"],
 });

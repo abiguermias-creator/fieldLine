@@ -8,36 +8,22 @@ export async function createSite(data: {
   city: string;
   accessNotes?: string;
 }) {
-
   const site = await prisma.site.create({
     data,
   });
 
-
   // background geocoding
-  geocodeSite(site.id)
-    .catch((error) => {
-      console.error(
-        "Background geocoding failed:",
-        error
-      );
-    });
-
+  geocodeSite(site.id).catch((error) => {
+    console.error("Background geocoding failed:", error);
+  });
 
   return site;
 }
 
-
-
-export async function getSites(user?: {
-  role: string;
-  userId: string;
-}) {
-
+export async function getSites(user?: { role: string; userId: string }) {
   let where = {};
 
   if (user?.role === "CLIENT") {
-
     const currentUser = await prisma.user.findUnique({
       where: {
         id: user.userId,
@@ -69,9 +55,7 @@ export async function getSites(user?: {
 }
 
 export async function getSiteById(id: string) {
-
   return prisma.site.findUnique({
-
     where: {
       id,
     },
@@ -80,80 +64,58 @@ export async function getSiteById(id: string) {
       client: true,
       workOrders: true,
     },
-
   });
-
 }
 
-
 export async function updateSite(
-  id:string,
-  data:{
-    clientId?:string;
-    name?:string;
-    address?:string;
-    city?:string;
-    accessNotes?:string;
-  }
-){
-
+  id: string,
+  data: {
+    clientId?: string;
+    name?: string;
+    address?: string;
+    city?: string;
+    accessNotes?: string;
+  },
+) {
   return prisma.site.update({
-
-    where:{
+    where: {
       id,
     },
 
     data,
-
   });
-
 }
 
+export async function deleteSite(id: string) {
+  const workOrderCount = await prisma.workOrder.count({
+    where: {
+      siteId: id,
+    },
+  });
 
-
-export async function deleteSite(id:string){
-
-  const workOrderCount =
-    await prisma.workOrder.count({
-      where:{
-        siteId:id,
-      },
-    });
-
-
-  if(workOrderCount > 0){
-
+  if (workOrderCount > 0) {
     throw new Error(
-      `Cannot delete site. It has ${workOrderCount} work orders. Deactivate instead.`
+      `Cannot delete site. It has ${workOrderCount} work orders. Deactivate instead.`,
     );
-
   }
 
-
   return prisma.site.delete({
-    where:{
+    where: {
       id,
     },
   });
-
 }
 
-
-
-export async function deactivateSite(id:string){
-
+export async function deactivateSite(id: string) {
   return prisma.site.update({
-
-    where:{
+    where: {
       id,
     },
 
-    data:{
-      isActive:false,
+    data: {
+      isActive: false,
     },
-
   });
-
 }
 
 export async function updateSiteLocation(
@@ -161,7 +123,7 @@ export async function updateSiteLocation(
   data: {
     latitude: number;
     longitude: number;
-  }
+  },
 ) {
   return prisma.site.update({
     where: {

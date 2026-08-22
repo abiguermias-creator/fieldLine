@@ -17,10 +17,7 @@ import {
   listClientsQuerySchema,
 } from "./client.schemas.js";
 
-export async function createClientController(
-  req: Request,
-  res: Response
-) {
+export async function createClientController(req: Request, res: Response) {
   const data = createClientSchema.parse(req.body);
 
   const client = await createClient(data);
@@ -28,24 +25,15 @@ export async function createClientController(
   res.status(201).json(client);
 }
 
-export async function getClientsController(
-  req: Request,
-  res: Response
-) {
+export async function getClientsController(req: Request, res: Response) {
   const query = listClientsQuerySchema.parse(req.query);
 
-  const clients = await getClients(
-    query.page,
-    query.search
-  );
+  const clients = await getClients(query.page, query.search);
 
   res.json(clients);
 }
 
-export async function getClientController(
-  req: Request,
-  res: Response
-) {
+export async function getClientController(req: Request, res: Response) {
   const { id } = clientIdSchema.parse(req.params);
 
   const client = await getClientById(id);
@@ -59,10 +47,7 @@ export async function getClientController(
   res.json(client);
 }
 
-export async function updateClientController(
-  req: Request,
-  res: Response
-) {
+export async function updateClientController(req: Request, res: Response) {
   const { id } = clientIdSchema.parse(req.params);
   const data = updateClientSchema.parse(req.body);
 
@@ -71,10 +56,7 @@ export async function updateClientController(
   res.json(client);
 }
 
-export async function deleteClientController(
-  req: Request,
-  res: Response
-) {
+export async function deleteClientController(req: Request, res: Response) {
   try {
     const { id } = clientIdSchema.parse(req.params);
 
@@ -88,10 +70,7 @@ export async function deleteClientController(
   }
 }
 
-export async function activateClientController(
-  req: Request,
-  res: Response
-) {
+export async function activateClientController(req: Request, res: Response) {
   try {
     const { id } = clientIdSchema.parse(req.params);
 
@@ -105,14 +84,10 @@ export async function activateClientController(
   }
 }
 
-export async function deactivateClientController(
-  req: Request,
-  res: Response
-) {
+export async function deactivateClientController(req: Request, res: Response) {
   const { id } = clientIdSchema.parse(req.params);
 
   const client = await deactivateClient(id);
 
   res.json(client);
 }
-

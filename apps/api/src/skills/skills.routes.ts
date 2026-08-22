@@ -8,50 +8,22 @@ import {
   updateSkillController,
 } from "./skills.controller.js";
 
-import {
-  requireAuth,
-} from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 import { requireRole } from "../middleware/role.js";
 
 const router = Router();
 
-const canManageSkills = requireRole(
-  "DISPATCHER",
-  "SUPERVISOR"
-);
+const canManageSkills = requireRole("DISPATCHER", "SUPERVISOR");
 
-router.get(
-  "/",
-  requireAuth,
-  getSkillsController
-);
+router.get("/", requireAuth, getSkillsController);
 
-router.get(
-  "/:id",
-  requireAuth,
-  getSkillController
-);
+router.get("/:id", requireAuth, getSkillController);
 
-router.post(
-  "/",
-  requireAuth,
-  canManageSkills,
-  createSkillController
-);
+router.post("/", requireAuth, canManageSkills, createSkillController);
 
-router.patch(
-  "/:id",
-  requireAuth,
-  canManageSkills,
-  updateSkillController
-);
+router.patch("/:id", requireAuth, canManageSkills, updateSkillController);
 
-router.delete(
-  "/:id",
-  requireAuth,
-  canManageSkills,
-  deleteSkillController
-);
+router.delete("/:id", requireAuth, canManageSkills, deleteSkillController);
 
 export default router;

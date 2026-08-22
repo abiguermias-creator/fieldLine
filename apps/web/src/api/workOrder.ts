@@ -1,11 +1,11 @@
-import { api } from "./client";
+import { api } from './client';
 
 type CreateWorkOrderData = {
   clientId: string;
   siteId: string;
   title: string;
   description?: string;
-  priority: "P1" | "P2" | "P3" | "P4";
+  priority: 'P1' | 'P2' | 'P3' | 'P4';
   duplicateConfirmed?: boolean;
 };
 
@@ -13,7 +13,7 @@ type CreateClientRequestData = {
   siteId: string;
   title: string;
   description?: string;
-  priority: "P1" | "P2" | "P3" | "P4";
+  priority: 'P1' | 'P2' | 'P3' | 'P4';
   p1Confirmed?: boolean;
   duplicateConfirmed?: boolean;
   agreedDate?: string | null;
@@ -29,46 +29,31 @@ type GetWorkOrdersParams = {
   search?: string;
   createdFrom?: string;
   createdTo?: string;
-  sortBy?: "createdAt" | "priority" | "nearestSla";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'createdAt' | 'priority' | 'nearestSla';
+  sortOrder?: 'asc' | 'desc';
 };
 
-export async function getWorkOrders(
-  params: GetWorkOrdersParams = {}
-) {
-  const response = await api.get("/work-orders", {
+export async function getWorkOrders(params: GetWorkOrdersParams = {}) {
+  const response = await api.get('/work-orders', {
     params: {
       ...params,
 
-      statuses:
-        params.statuses && params.statuses.length > 0
-          ? params.statuses.join(",")
-          : undefined,
+      statuses: params.statuses && params.statuses.length > 0 ? params.statuses.join(',') : undefined,
 
-      priorities:
-        params.priorities && params.priorities.length > 0
-          ? params.priorities.join(",")
-          : undefined,
-    },
+      priorities: params.priorities && params.priorities.length > 0 ? params.priorities.join(',') : undefined
+    }
   });
 
   return response.data;
 }
 
-export async function createWorkOrder(
-  data: CreateWorkOrderData
-) {
-  const response = await api.post("/work-orders", data);
+export async function createWorkOrder(data: CreateWorkOrderData) {
+  const response = await api.post('/work-orders', data);
   return response.data;
 }
 
-export async function createClientRequest(
-  data: CreateClientRequestData
-) {
-  const response = await api.post(
-    "/work-orders/request",
-    data
-  );
+export async function createClientRequest(data: CreateClientRequestData) {
+  const response = await api.post('/work-orders/request', data);
 
   return response.data;
 }
@@ -81,30 +66,42 @@ export async function getWorkOrderById(id: string) {
 type UpdateWorkOrderData = {
   title?: string;
   description?: string;
-  priority?: "P1" | "P2" | "P3" | "P4";
+  priority?: 'P1' | 'P2' | 'P3' | 'P4';
   estimatedDuration?: number | null;
   skillIds?: string[];
+  equipmentId?: string | null;
+  technicianId?: string | null;
+  scheduledAt?: string | null;
+  scheduledEndAt?: string | null;
+  overrideDailyHours?: boolean;
+  overrideReason?: string;
 };
 
-export async function updateWorkOrder(
-  id: string,
-  data: UpdateWorkOrderData
-) {
-  const response = await api.patch(
-    `/work-orders/${id}`,
-    data
-  );
+export async function updateWorkOrder(id: string, data: UpdateWorkOrderData) {
+  const response = await api.patch(`/work-orders/${id}`, data);
 
   return response.data;
 }
 
-export async function cancelWorkOrder(
+export async function cancelWorkOrder(id: string, reason: string) {
+  const response = await api.patch(`/work-orders/${id}/cancel`, { reason });
+
+  return response.data;
+}
+
+export async function getAssignmentOptions(workOrderId: string) {
+  const response = await api.get(`/work-orders/${workOrderId}/assignment-options`);
+
+  return response.data;
+}
+
+export async function unassignWorkOrder(
   id: string,
-  reason: string
+  reason: string,
 ) {
   const response = await api.patch(
-    `/work-orders/${id}/cancel`,
-    { reason }
+    `/work-orders/${id}/unassign`,
+    { reason },
   );
 
   return response.data;

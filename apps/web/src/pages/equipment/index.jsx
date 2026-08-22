@@ -11,14 +11,7 @@ import Box from '@mui/material/Box';
 
 import MainCard from 'components/MainCard';
 
-import {
-  getEquipment,
-  createEquipment,
-  updateEquipment,
-  deleteEquipment,
-  deactivateEquipment,
-  activateEquipment
-} from 'api/equipment';
+import { getEquipment, createEquipment, updateEquipment, deleteEquipment, deactivateEquipment, activateEquipment } from 'api/equipment';
 
 export default function Equipment() {
   const [equipment, setEquipment] = useState([]);
@@ -42,11 +35,7 @@ export default function Equipment() {
     } catch (error) {
       console.error('Failed to load equipment:', error);
 
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to load equipment'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to load equipment');
     }
   }
 
@@ -82,24 +71,18 @@ export default function Equipment() {
       };
 
       if (!data.code || !data.name || !data.category) {
-        setMessage(
-          'Code, name, and category are required.'
-        );
+        setMessage('Code, name, and category are required.');
         return;
       }
 
       if (editingId) {
         await updateEquipment(editingId, data);
 
-        setMessage(
-          'Equipment updated successfully'
-        );
+        setMessage('Equipment updated successfully');
       } else {
         await createEquipment(data);
 
-        setMessage(
-          'Equipment created successfully'
-        );
+        setMessage('Equipment created successfully');
       }
 
       resetForm();
@@ -108,11 +91,7 @@ export default function Equipment() {
     } catch (error) {
       console.error('Equipment save failed:', error);
 
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to save equipment'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to save equipment');
     }
   }
 
@@ -133,9 +112,7 @@ export default function Equipment() {
     try {
       await deleteEquipment(id);
 
-      setMessage(
-        'Equipment deleted successfully'
-      );
+      setMessage('Equipment deleted successfully');
 
       if (editingId === id) {
         resetForm();
@@ -145,11 +122,7 @@ export default function Equipment() {
     } catch (error) {
       console.error('Failed to delete equipment:', error);
 
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to delete equipment'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to delete equipment');
     }
   }
 
@@ -157,22 +130,13 @@ export default function Equipment() {
     try {
       await deactivateEquipment(id);
 
-      setMessage(
-        'Equipment deactivated successfully'
-      );
+      setMessage('Equipment deactivated successfully');
 
       await loadEquipment();
     } catch (error) {
-      console.error(
-        'Failed to deactivate equipment:',
-        error
-      );
+      console.error('Failed to deactivate equipment:', error);
 
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to deactivate equipment'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to deactivate equipment');
     }
   }
 
@@ -180,22 +144,13 @@ export default function Equipment() {
     try {
       await activateEquipment(id);
 
-      setMessage(
-        'Equipment activated successfully'
-      );
+      setMessage('Equipment activated successfully');
 
       await loadEquipment();
     } catch (error) {
-      console.error(
-        'Failed to activate equipment:',
-        error
-      );
+      console.error('Failed to activate equipment:', error);
 
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to activate equipment'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to activate equipment');
     }
   }
 
@@ -206,99 +161,44 @@ export default function Equipment() {
       </Typography>
 
       <Stack spacing={2} sx={{ mb: 4 }}>
-        <TextField
-          label="Equipment Code"
-          value={form.code}
-          onChange={(e) =>
-            handleFormChange(
-              'code',
-              e.target.value
-            )
-          }
-          fullWidth
-        />
+        <TextField label="Equipment Code" value={form.code} onChange={(e) => handleFormChange('code', e.target.value)} fullWidth />
 
-        <TextField
-          label="Equipment Name"
-          value={form.name}
-          onChange={(e) =>
-            handleFormChange(
-              'name',
-              e.target.value
-            )
-          }
-          fullWidth
-        />
+        <TextField label="Equipment Name" value={form.name} onChange={(e) => handleFormChange('name', e.target.value)} fullWidth />
 
-        <TextField
-          label="Category"
-          value={form.category}
-          onChange={(e) =>
-            handleFormChange(
-              'category',
-              e.target.value
-            )
-          }
-          fullWidth
-        />
+        <TextField label="Category" value={form.category} onChange={(e) => handleFormChange('category', e.target.value)} fullWidth />
 
         <TextField
           label="Description"
           value={form.description}
-          onChange={(e) =>
-            handleFormChange(
-              'description',
-              e.target.value
-            )
-          }
+          onChange={(e) => handleFormChange('description', e.target.value)}
           multiline
           rows={3}
           fullWidth
         />
 
-        <Stack
-          direction="row"
-          spacing={2}
-        >
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-          >
-            {editingId
-              ? 'Update Equipment'
-              : 'Create Equipment'}
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" onClick={handleSubmit}>
+            {editingId ? 'Update Equipment' : 'Create Equipment'}
           </Button>
 
           {editingId && (
-            <Button
-              variant="outlined"
-              onClick={resetForm}
-            >
+            <Button variant="outlined" onClick={resetForm}>
               Cancel
             </Button>
           )}
         </Stack>
 
-        {message && (
-          <Typography>
-            {message}
-          </Typography>
-        )}
+        {message && <Typography>{message}</Typography>}
       </Stack>
 
-      <Typography
-        variant="h5"
-        sx={{ mb: 2 }}
-      >
+      <Typography variant="h5" sx={{ mb: 2 }}>
         Equipment List
       </Typography>
 
       <List>
         {equipment.length === 0 ? (
           <ListItem>
-            <ListItemText
-              primary="No equipment found"
-            />
+            <ListItemText primary="No equipment found" />
           </ListItem>
         ) : (
           equipment.map((item) => (
@@ -311,74 +211,30 @@ export default function Equipment() {
               }}
             >
               <ListItemText
-                primary={
-                  item.name ||
-                  'Unnamed Equipment'
-                }
+                primary={item.name || 'Unnamed Equipment'}
                 secondary={
                   <>
-                    Code:{' '}
-                    {item.code || 'No code'}
+                    Code: {item.code || 'No code'}
                     <br />
-
-                    Category:{' '}
-                    {item.category ||
-                      'No category'}
+                    Category: {item.category || 'No category'}
                     <br />
-
-                    Description:{' '}
-                    {item.description ||
-                      'No description'}
+                    Description: {item.description || 'No description'}
                     <br />
-
-                    Status:{' '}
-                    {item.isActive
-                      ? 'Active'
-                      : 'Inactive'}
+                    Status: {item.isActive ? 'Active' : 'Inactive'}
                   </>
                 }
               />
 
-              <Stack
-                direction="row"
-                spacing={1}
-              >
-                <Button
-                  onClick={() =>
-                    handleEdit(item)
-                  }
-                >
-                  Edit
-                </Button>
+              <Stack direction="row" spacing={1}>
+                <Button onClick={() => handleEdit(item)}>Edit</Button>
 
                 {item.isActive ? (
-                  <Button
-                    onClick={() =>
-                      handleDeactivate(
-                        item.id
-                      )
-                    }
-                  >
-                    Deactivate
-                  </Button>
+                  <Button onClick={() => handleDeactivate(item.id)}>Deactivate</Button>
                 ) : (
-                  <Button
-                    onClick={() =>
-                      handleActivate(
-                        item.id
-                      )
-                    }
-                  >
-                    Activate
-                  </Button>
+                  <Button onClick={() => handleActivate(item.id)}>Activate</Button>
                 )}
 
-                <Button
-                  color="error"
-                  onClick={() =>
-                    handleDelete(item.id)
-                  }
-                >
+                <Button color="error" onClick={() => handleDelete(item.id)}>
                   Delete
                 </Button>
               </Stack>
@@ -388,9 +244,7 @@ export default function Equipment() {
       </List>
 
       <Box sx={{ mt: 3 }}>
-        <Typography variant="body2">
-          Total equipment: {equipment.length}
-        </Typography>
+        <Typography variant="body2">Total equipment: {equipment.length}</Typography>
       </Box>
     </MainCard>
   );

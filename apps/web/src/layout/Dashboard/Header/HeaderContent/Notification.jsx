@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // material-ui
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -7,7 +7,6 @@ import Badge from '@mui/material/Badge';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
@@ -16,19 +15,17 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-// project imports
+
 import MainCard from 'components/MainCard';
 import IconButton from 'components/@extended/IconButton';
 import Transitions from 'components/@extended/Transitions';
+import { api } from 'api/client';
 
-// assets
-import { BellOutlined } from "@ant-design/icons";
-import { CheckCircleOutlined } from "@ant-design/icons";
-import { GiftOutlined } from "@ant-design/icons";
-import { MessageOutlined } from "@ant-design/icons";
-import { SettingOutlined } from "@ant-design/icons";
 
-// sx styles
+import { BellOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined } from '@ant-design/icons';
+
+
 const avatarSX = {
   width: 36,
   height: 36,
@@ -45,14 +42,27 @@ const actionSX = {
   transform: 'none'
 };
 
-// ==============================|| HEADER CONTENT - NOTIFICATION ||============================== //
 
 export default function Notification() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
   const anchorRef = useRef(null);
-  const [read, setRead] = useState(2);
-  const [open, setOpen] = useState(false);
+ const [notifications, setNotifications] = useState([]);
+const [open, setOpen] = useState(false);
+
+useEffect(() => {
+  async function loadNotifications() {
+    try {
+      const response = await api.get('/notifications');
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Failed to load notifications', error);
+    }
+  }
+
+  loadNotifications();
+}, []);
+const unreadCount = notifications.length;
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -79,7 +89,7 @@ export default function Notification() {
         aria-haspopup="true"
         onClick={handleToggle}
       >
-        <Badge badgeContent={read} color="primary">
+        <Badge badgeContent={unreadCount} color="primary">
           <BellOutlined />
         </Badge>
       </IconButton>
@@ -103,9 +113,9 @@ export default function Notification() {
                   content={false}
                   secondary={
                     <>
-                      {read > 0 && (
+                      {notifications.length > 0 && (
                         <Tooltip title="Mark as all read">
-                          <IconButton color="success" size="small" onClick={() => setRead(0)}>
+                          <IconButton color="success" size="small" onClick={() => setNotifications([])}>
                             <CheckCircleOutlined style={{ fontSize: '1.15rem' }} />
                           </IconButton>
                         </Tooltip>
@@ -126,124 +136,57 @@ export default function Notification() {
                       }
                     }}
                   >
-                    <ListItem
-                      component={ListItemButton}
-                      divider
-                      selected={read > 0}
-                      secondaryAction={
-                        <Typography variant="caption" noWrap>
-                          3:00 AM
-                        </Typography>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ color: 'success.main', bgcolor: 'success.lighter' }}>
-                          <GiftOutlined />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6">
-                            It&apos;s{' '}
-                            <Typography component="span" variant="subtitle1">
-                              Cristina danny&apos;s
-                            </Typography>{' '}
-                            birthday today.
-                          </Typography>
-                        }
-                        secondary="2 min ago"
-                      />
-                    </ListItem>
-                    <ListItem
-                      component={ListItemButton}
-                      divider
-                      secondaryAction={
-                        <Typography variant="caption" noWrap>
-                          6:00 AM
-                        </Typography>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ color: 'primary.main', bgcolor: 'primary.lighter' }}>
-                          <MessageOutlined />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6">
-                            <Typography component="span" variant="subtitle1">
-                              Aida Burg
-                            </Typography>{' '}
-                            commented your post.
-                          </Typography>
-                        }
-                        secondary="5 August"
-                      />
-                    </ListItem>
-                    <ListItem
-                      component={ListItemButton}
-                      divider
-                      selected={read > 0}
-                      secondaryAction={
-                        <Typography variant="caption" noWrap>
-                          2:45 PM
-                        </Typography>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ color: 'error.main', bgcolor: 'error.lighter' }}>
-                          <SettingOutlined />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6">
-                            Your Profile is Complete &nbsp;
-                            <Typography component="span" variant="subtitle1">
-                              60%
-                            </Typography>{' '}
-                          </Typography>
-                        }
-                        secondary="7 hours ago"
-                      />
-                    </ListItem>
-                    <ListItem
-                      component={ListItemButton}
-                      divider
-                      secondaryAction={
-                        <Typography variant="caption" noWrap>
-                          9:10 PM
-                        </Typography>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ color: 'primary.main', bgcolor: 'primary.lighter' }}>C</Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6">
-                            <Typography component="span" variant="subtitle1">
-                              Cristina Danny
-                            </Typography>{' '}
-                            invited to join{' '}
-                            <Typography component="span" variant="subtitle1">
-                              Meeting.
-                            </Typography>
-                          </Typography>
-                        }
-                        secondary="Daily scrum meeting time"
-                      />
-                    </ListItem>
-                    <ListItemButton sx={{ textAlign: 'center', py: `${12}px !important` }}>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6" sx={{ color: 'primary.main' }}>
-                            View All
-                          </Typography>
-                        }
-                      />
-                    </ListItemButton>
-                  </List>
+                    {notifications.length === 0 ? (
+  <ListItem>
+    <ListItemText
+      primary="No notifications"
+      secondary="You're all caught up."
+    />
+  </ListItem>
+) : (
+  notifications.map((notification) => (
+    <ListItem
+      key={notification.id}
+      divider
+    >
+      <ListItemAvatar>
+        <Avatar
+          sx={{
+            color: 'primary.main',
+            bgcolor: 'primary.lighter'
+          }}
+        >
+          <BellOutlined />
+        </Avatar>
+      </ListItemAvatar>
+
+      <ListItemText
+        primary={
+          <Typography variant="h6">
+            {notification.title}
+          </Typography>
+        }
+        secondary={notification.message}
+      />
+
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ ml: 1 }}
+      >
+        {notification.createdAt
+          ? new Date(
+              notification.createdAt
+            ).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : ''}
+      </Typography>
+    </ListItem>
+  ))
+)}
+</List>
                 </MainCard>
               </ClickAwayListener>
             </Paper>

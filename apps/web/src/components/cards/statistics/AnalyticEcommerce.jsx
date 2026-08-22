@@ -10,8 +10,8 @@ import Box from '@mui/material/Box';
 import MainCard from 'components/MainCard';
 
 // assets
-import { RiseOutlined } from "@ant-design/icons";
-import { FallOutlined } from "@ant-design/icons";
+import { RiseOutlined } from '@ant-design/icons';
+import { FallOutlined } from '@ant-design/icons';
 
 const iconSX = { fontSize: '0.75rem', color: 'inherit', marginLeft: 0, marginRight: 0 };
 

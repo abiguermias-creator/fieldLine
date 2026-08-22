@@ -29,7 +29,9 @@ import { getTechnicians } from 'api/technicians';
 
 const STATUSES = [
   'NEW',
+  'TRIAGED',
   'ASSIGNED',
+  'SCHEDULED',
   'IN_PROGRESS',
   'COMPLETED',
   'CLOSED',

@@ -13,9 +13,7 @@ export async function createEquipment(data: {
   });
 
   if (existingCode) {
-    throw new Error(
-      `Equipment with code "${data.code}" already exists.`
-    );
+    throw new Error(`Equipment with code "${data.code}" already exists.`);
   }
 
   return prisma.equipment.create({
@@ -30,6 +28,9 @@ export async function createEquipment(data: {
 
 export async function getEquipment() {
   return prisma.equipment.findMany({
+    where: {
+      isActive: true,
+    },
     orderBy: {
       name: "asc",
     },
@@ -51,7 +52,7 @@ export async function updateEquipment(
     name?: string;
     category?: string;
     description?: string;
-  }
+  },
 ) {
   const equipment = await prisma.equipment.findUnique({
     where: {
@@ -71,9 +72,7 @@ export async function updateEquipment(
     });
 
     if (existingCode) {
-      throw new Error(
-        `Equipment with code "${data.code}" already exists.`
-      );
+      throw new Error(`Equipment with code "${data.code}" already exists.`);
     }
   }
 
@@ -120,9 +119,7 @@ export async function deleteEquipment(id: string) {
   const assignedToFutureWorkOrder = await hasFutureWorkOrder(id);
 
   if (assignedToFutureWorkOrder) {
-    throw new Error(
-      "Cannot delete equipment. It is assigned to a future work order."
-    );
+    throw new Error("Cannot delete equipment. It is assigned to a future work order.");
   }
 
   return prisma.equipment.delete({
@@ -146,9 +143,7 @@ export async function deactivateEquipment(id: string) {
   const assignedToFutureWorkOrder = await hasFutureWorkOrder(id);
 
   if (assignedToFutureWorkOrder) {
-    throw new Error(
-      "Cannot deactivate equipment. It is assigned to a future work order."
-    );
+    throw new Error("Cannot deactivate equipment. It is assigned to a future work order.");
   }
 
   return prisma.equipment.update({

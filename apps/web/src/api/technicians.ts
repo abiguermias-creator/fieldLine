@@ -1,18 +1,13 @@
-import { api } from "./client";
+import { api } from './client';
 
-export async function getTechnicians(
-  page = 1,
-  limit = 25,
-  search = "",
-  skillId?: string
-) {
-  const response = await api.get("/technicians", {
+export async function getTechnicians(page = 1, limit = 25, search = '', skillId?: string) {
+  const response = await api.get('/technicians', {
     params: {
       page,
       limit,
       search,
-      ...(skillId ? { skillId } : {}),
-    },
+      ...(skillId ? { skillId } : {})
+    }
   });
 
   return response.data;
@@ -28,7 +23,7 @@ export async function createTechnician(data: {
   phone?: string;
   bio?: string;
 }) {
-  const response = await api.post("/technicians", data);
+  const response = await api.post('/technicians', data);
 
   return response.data;
 }
@@ -50,17 +45,13 @@ export async function updateTechnician(
 }
 
 export async function deactivateTechnician(id: string) {
-  const response = await api.patch(
-    `/technicians/${id}/deactivate`
-  );
+  const response = await api.patch(`/technicians/${id}/deactivate`);
 
   return response.data;
 }
 
 export async function activateTechnician(id: string) {
-  const response = await api.patch(
-    `/technicians/${id}/activate`
-  );
+  const response = await api.patch(`/technicians/${id}/activate`);
 
   return response.data;
 }

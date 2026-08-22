@@ -24,6 +24,7 @@ model User {
   technicianProfile TechnicianProfile?
   client            Client?            @relation(fields: [clientId], references: [id])
   workOrderEvents   WorkOrderEvent[]
+  notifications     Notification[]
 
   @@map("users")
 }
@@ -89,6 +90,22 @@ model GeocodeCache {
   @@map("geocode_cache")
 }
 
+model RoutingCache {
+  id            String   @id @default(uuid()) @db.Uuid
+  fromLatitude  Float    @map("from_latitude")
+  fromLongitude Float    @map("from_longitude")
+  toLatitude    Float    @map("to_latitude")
+  toLongitude   Float    @map("to_longitude")
+  travelMinutes Int      @map("travel_minutes")
+  distanceKm    Float?   @map("distance_km")
+  source        String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([fromLatitude, fromLongitude, toLatitude, toLongitude])
+  @@map("routing_cache")
+}
+
 model Skill {
   id        String   @id @default(uuid()) @db.Uuid
   code      String   @unique
@@ -137,25 +154,30 @@ model Equipment {
 }
 
 model WorkOrder {
-  id                  String            @id @default(uuid()) @db.Uuid
-  reference           String            @unique
-  clientId            String            @map("client_id") @db.Uuid
-  siteId              String            @map("site_id") @db.Uuid
-  title               String
-  description         String?
-  cancellationReason  String?           @map("cancellation_reason")
-  status              WorkOrderStatus   @default(NEW)
-  priority            WorkOrderPriority @default(P3)
-  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  scheduledAt         DateTime?         @map("scheduled_at") @db.Timestamptz(6)
-  estimatedDuration   Int?              @map("estimated_duration")
-  agreedDate          DateTime?         @map("agreed_date") @db.Timestamptz(6)
-  slaRespondBy        DateTime?         @map("sla_respond_by") @db.Timestamptz(6)
-  slaResolveBy        DateTime?         @map("sla_resolve_by") @db.Timestamptz(6)
-  technicianId        String?           @map("technician_id") @db.Uuid
-  equipmentId         String?           @map("equipment_id") @db.Uuid
-  originalWorkOrderId String?           @map("original_work_order_id") @db.Uuid
+  id                       String            @id @default(uuid()) @db.Uuid
+  reference                String            @unique
+  clientId                 String            @map("client_id") @db.Uuid
+  siteId                   String            @map("site_id") @db.Uuid
+  title                    String
+  description              String?
+  isOutdoor                Boolean           @default(false) @map("is_outdoor")
+  cancellationReason       String?           @map("cancellation_reason")
+  status                   WorkOrderStatus   @default(NEW)
+  priority                 WorkOrderPriority @default(P3)
+  createdAt                DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  scheduledAt              DateTime?         @map("scheduled_at") @db.Timestamptz(6)
+  scheduledEndAt           DateTime?         @map("scheduled_end_at") @db.Timestamptz(6)
+  estimatedDuration        Int?              @map("estimated_duration")
+  dailyHoursOverride       Boolean           @default(false) @map("daily_hours_override")
+  dailyHoursOverrideReason String?           @map("daily_hours_override_reason")
+  dailyHoursOverrideRules  String?           @map("daily_hours_override_rules")
+  agreedDate               DateTime?         @map("agreed_date") @db.Timestamptz(6)
+  slaRespondBy             DateTime?         @map("sla_respond_by") @db.Timestamptz(6)
+  slaResolveBy             DateTime?         @map("sla_resolve_by") @db.Timestamptz(6)
+  technicianId             String?           @map("technician_id") @db.Uuid
+  equipmentId              String?           @map("equipment_id") @db.Uuid
+  originalWorkOrderId      String?           @map("original_work_order_id") @db.Uuid
 
   originalWorkOrder  WorkOrder?  @relation("WorkOrderFollowUp", fields: [originalWorkOrderId], references: [id])
   followUpWorkOrders WorkOrder[] @relation("WorkOrderFollowUp")
@@ -216,9 +238,26 @@ model TechnicianSkill {
   @@map("technician_skills")
 }
 
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
 enum WorkOrderStatus {
   NEW
+  TRIAGED
   ASSIGNED
+  SCHEDULED
   IN_PROGRESS
   COMPLETED
   CLOSED

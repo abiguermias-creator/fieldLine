@@ -16,19 +16,19 @@ router.use(requireAuth);
 router.get(
   "/:technicianId/skills",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  getTechnicianSkillsController
+  getTechnicianSkillsController,
 );
 
 router.post(
   "/:technicianId/skills",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  addTechnicianSkillController
+  addTechnicianSkillController,
 );
 
 router.delete(
   "/:technicianId/skills/:skillId",
   requireRole("DISPATCHER", "SUPERVISOR"),
-  removeTechnicianSkillController
+  removeTechnicianSkillController,
 );
 
 export default router;

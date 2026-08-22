@@ -1,9 +1,6 @@
 import { prisma } from "../db/client.js";
 
-export async function createSkill(data: {
-  code: string;
-  name: string;
-}) {
+export async function createSkill(data: { code: string; name: string }) {
   const existingSkill = await prisma.skill.findUnique({
     where: {
       code: data.code,
@@ -11,9 +8,7 @@ export async function createSkill(data: {
   });
 
   if (existingSkill) {
-    throw new Error(
-      `A skill with code "${data.code}" already exists.`
-    );
+    throw new Error(`A skill with code "${data.code}" already exists.`);
   }
 
   return prisma.skill.create({
@@ -42,7 +37,7 @@ export async function updateSkill(
   data: {
     code?: string;
     name?: string;
-  }
+  },
 ) {
   return prisma.skill.update({
     where: {
@@ -63,7 +58,7 @@ export async function deleteSkill(id: string) {
     throw new Error(
       `Cannot delete skill. It is required by ${workOrderCount} work order${
         workOrderCount === 1 ? "" : "s"
-      }.`
+      }.`,
     );
   }
 
