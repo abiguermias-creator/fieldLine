@@ -61,3 +61,26 @@ export async function getTechnician(id: string) {
 
   return response.data;
 }
+
+export async function getMyDay() {
+  const response = await api.get('/technicians/me/day');
+
+  return response.data;
+}
+
+export async function updateMyLocation(latitude: number, longitude: number) {
+  const response = await api.post('/technicians/me/location', {
+    latitude,
+    longitude
+  });
+
+  return response.data;
+}
+
+export async function updateMyLocationSharing(enabled: boolean) {
+  const response = await api.patch('/technicians/me/location-sharing', {
+    enabled
+  });
+
+  return response.data;
+}

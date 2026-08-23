@@ -859,9 +859,19 @@ export default function WorkOrders() {
                           {workOrder.priority}
                         </TableCell>
 
-                        <TableCell>
-                          {workOrder.status}
-                        </TableCell>
+                        <TableCell
+  sx={
+    workOrder.status === 'AWAITING_PARTS'
+      ? {
+          fontWeight: 700,
+          backgroundColor: 'warning.light',
+          color: 'warning.contrastText'
+        }
+      : undefined
+  }
+>
+  {workOrder.status}
+</TableCell>
 
                         <TableCell>
                           {getTechnicianName(

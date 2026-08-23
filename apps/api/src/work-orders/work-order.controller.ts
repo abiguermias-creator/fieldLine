@@ -13,6 +13,12 @@ import {
   unassignWorkOrder,
   createFollowUpWorkOrder,
   getAssignmentOptions,
+  moveWorkOrderStatus,
+  createWorkLog,
+  getWorkLogs,
+  getWorkOrderPhotos,
+  createWorkOrderPhoto,
+  markWorkOrderWaitingOnParts,
 } from "./work-order.service.js";
 
 import {
@@ -21,7 +27,9 @@ import {
   listWorkOrderQuerySchema,
   updateWorkOrderSchema,
   cancelWorkOrderSchema,
-  unassignWorkOrderSchema
+  unassignWorkOrderSchema,
+  createWorkLogSchema,
+  waitingOnPartsSchema,
 } from "./work-order.schemas.js";
 
 export async function createWorkOrderController(req: Request, res: Response) {
@@ -430,6 +438,323 @@ export async function getAssignmentOptionsController(
 
     return res.status(500).json({
       message: "Failed to get assignment options",
+    });
+  }
+}
+
+export async function moveWorkOrderStatusController(
+  req: AuthRequest,
+  res: Response,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const workOrder =
+      await moveWorkOrderStatus(
+        req.params.id as string,
+        req.user.userId,
+      );
+
+    res.json(workOrder);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+          "Work order is not assigned to a technician" ||
+        error.message ===
+          "Assigned technician not found"
+      ) {
+        return res.status(409).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+        "Only the assigned technician can move this work order"
+      ) {
+        return res.status(403).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(409).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message:
+        "Failed to move work order status",
+    });
+  }
+}
+
+export async function markWorkOrderWaitingOnPartsController(
+  req: AuthRequest,
+  res: Response,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const data =
+      waitingOnPartsSchema.parse(req.body);
+
+    const workOrder =
+      await markWorkOrderWaitingOnParts(
+        req.params.id as string,
+        req.user.userId,
+        data.description,
+      );
+
+    return res.json(workOrder);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+          "Only work orders in progress can be marked as waiting on parts" ||
+        error.message ===
+          "Work order is not assigned to a technician" ||
+        error.message ===
+          "Assigned technician not found"
+      ) {
+        return res.status(409).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+        "Only the assigned technician can mark this work order as waiting on parts"
+      ) {
+        return res.status(403).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message:
+        "Failed to mark work order as waiting on parts",
+    });
+  }
+}
+
+export async function createWorkLogController(
+  req: AuthRequest,
+  res: Response,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const data = createWorkLogSchema.parse(
+      req.body,
+    );
+
+    const workLog = await createWorkLog(
+      req.params.id as string,
+      req.user.userId,
+      data,
+    );
+
+    res.status(201).json(workLog);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message:
+          error.issues[0]?.message ||
+          "Invalid work log",
+      });
+    }
+
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+        "Technician profile not found"
+      ) {
+        return res.status(403).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+        "Only the assigned technician can add work logs"
+      ) {
+        return res.status(403).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error.message ===
+        "Work logs can only be added to work orders that are in progress"
+      ) {
+        return res.status(409).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to create work log",
+    });
+  }
+}
+
+export async function getWorkLogsController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const result = await getWorkLogs(
+      req.params.id as string,
+    );
+
+    res.json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to get work logs",
+    });
+  }
+}
+
+export async function getWorkOrderPhotosController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const photos = await getWorkOrderPhotos(
+      req.params.id as string,
+    );
+
+    res.json(photos);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to get work order photos",
+    });
+  }
+}
+
+export async function createWorkOrderPhotoController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        message: "An image file is required",
+      });
+    }
+
+    const photo = await createWorkOrderPhoto(
+      req.params.id as string,
+      {
+        buffer: file.buffer,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+      },
+    );
+
+    res.status(201).json(photo);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        "Work order not found"
+      ) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      }
+
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to upload work order photo",
     });
   }
 }

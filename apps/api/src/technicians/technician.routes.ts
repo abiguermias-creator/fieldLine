@@ -4,9 +4,12 @@ import {
   createTechnicianController,
   getTechniciansController,
   getTechnicianController,
+  getMyDayController,
   updateTechnicianController,
   deactivateTechnicianController,
   activateTechnicianController,
+  updateTechnicianLocationController,
+  updateMyLocationSharingController,
 } from "./technician.controller.js";
 
 import { requireAuth } from "../middleware/auth.js";
@@ -19,6 +22,12 @@ router.use(requireAuth);
 router.post("/", requireRole("DISPATCHER", "SUPERVISOR"), createTechnicianController);
 
 router.get("/", requireRole("DISPATCHER", "SUPERVISOR"), getTechniciansController);
+
+router.get("/me/day", requireRole("TECHNICIAN"), getMyDayController);
+
+router.post("/me/location", requireRole("TECHNICIAN"), updateTechnicianLocationController);
+
+router.patch("/me/location-sharing", requireRole("TECHNICIAN"), updateMyLocationSharingController);
 
 router.get("/:id", requireRole("DISPATCHER", "SUPERVISOR"), getTechnicianController);
 

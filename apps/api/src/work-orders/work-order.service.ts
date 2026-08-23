@@ -3,6 +3,10 @@ import { geocodeAddress } from "../geocode/geocode.service.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { getWeatherForecast } from "../weather/weather.service.js";
 
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+
 type WorkOrderPriority = "P1" | "P2" | "P3" | "P4";
 
 type WorkOrderStatus =
@@ -2904,5 +2908,460 @@ export async function unassignWorkOrder(
     }
 
     return workOrder;
+  });
+}
+
+export async function moveWorkOrderStatus(
+  id: string,
+  actorId: string,
+) {
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        technicianId: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  if (
+    !workOrder.technicianId
+  ) {
+    throw new Error(
+      "Work order is not assigned to a technician",
+    );
+  }
+
+  const technician =
+    await prisma.technicianProfile.findUnique({
+      where: {
+        id: workOrder.technicianId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  if (!technician) {
+    throw new Error(
+      "Assigned technician not found",
+    );
+  }
+
+  if (technician.userId !== actorId) {
+    throw new Error(
+      "Only the assigned technician can move this work order",
+    );
+  }
+
+  const nextStatusMap: Record<
+    string,
+    "EN_ROUTE" | "ON_SITE" | "IN_PROGRESS" | "COMPLETED"
+  > = {
+    ASSIGNED: "EN_ROUTE",
+    EN_ROUTE: "ON_SITE",
+    ON_SITE: "IN_PROGRESS",
+    IN_PROGRESS: "COMPLETED",
+  };
+
+  const nextStatus =
+    nextStatusMap[workOrder.status];
+
+  if (!nextStatus) {
+    throw new Error(
+      `Work order cannot move forward from ${workOrder.status}`,
+    );
+  }
+
+  const updated =
+    await prisma.$transaction(
+      async (tx) => {
+        const data: {
+          status:
+            | "EN_ROUTE"
+            | "ON_SITE"
+            | "IN_PROGRESS"
+            | "COMPLETED";
+          arrivedAt?: Date;
+        } = {
+          status: nextStatus,
+        };
+
+        if (nextStatus === "ON_SITE") {
+          data.arrivedAt = new Date();
+        }
+
+        const result =
+          await tx.workOrder.update({
+            where: {
+              id,
+            },
+            data,
+          });
+
+        await tx.workOrderEvent.create({
+          data: {
+            workOrderId: id,
+            actorId,
+            eventType:
+              "STATUS_CHANGED",
+            oldValue:
+              workOrder.status,
+            newValue:
+              nextStatus,
+          },
+        });
+
+        return result;
+      },
+    );
+
+  return updated;
+}
+
+export async function markWorkOrderWaitingOnParts(
+  id: string,
+  actorId: string,
+  description: string,
+) {
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        technicianId: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  if (workOrder.status !== "IN_PROGRESS") {
+    throw new Error(
+      "Only work orders in progress can be marked as waiting on parts",
+    );
+  }
+
+  if (!workOrder.technicianId) {
+    throw new Error(
+      "Work order is not assigned to a technician",
+    );
+  }
+
+  const technician =
+    await prisma.technicianProfile.findUnique({
+      where: {
+        id: workOrder.technicianId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  if (!technician) {
+    throw new Error(
+      "Assigned technician not found",
+    );
+  }
+
+  if (technician.userId !== actorId) {
+    throw new Error(
+      "Only the assigned technician can mark this work order as waiting on parts",
+    );
+  }
+
+  const updated =
+    await prisma.$transaction(
+      async (tx) => {
+        const result =
+          await tx.workOrder.update({
+            where: {
+              id,
+            },
+            data: {
+              status: "AWAITING_PARTS",
+              waitingOnPartsDescription:
+                description.trim(),
+            },
+          });
+
+        await tx.workOrderEvent.create({
+          data: {
+            workOrderId: id,
+            actorId,
+            eventType: "STATUS_CHANGED",
+            oldValue: "IN_PROGRESS",
+            newValue: "AWAITING_PARTS",
+          },
+        });
+
+        return result;
+      },
+    );
+
+  return updated;
+}
+
+export async function createWorkLog(
+  workOrderId: string,
+  userId: string,
+  data: {
+    note: string;
+    minutesSpent: number;
+    partsUsed?: string;
+  },
+) {
+  const technician =
+    await prisma.technicianProfile.findUnique({
+      where: {
+        userId,
+      },
+      select: {
+        id: true,
+        user: {
+          select: {
+            fullName: true,
+          },
+        },
+      },
+    });
+
+  if (!technician) {
+    throw new Error(
+      "Technician profile not found",
+    );
+  }
+
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: {
+        id: workOrderId,
+      },
+      select: {
+        id: true,
+        status: true,
+        technicianId: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  if (workOrder.status !== "IN_PROGRESS") {
+    throw new Error(
+      "Work logs can only be added to work orders that are in progress",
+    );
+  }
+
+  if (workOrder.technicianId !== technician.id) {
+    throw new Error(
+      "Only the assigned technician can add work logs",
+    );
+  }
+
+  if (data.minutesSpent <= 0) {
+    throw new Error(
+      "Minutes spent must be greater than zero",
+    );
+  }
+
+  return prisma.workLog.create({
+    data: {
+      workOrderId,
+      technicianId: technician.id,
+      note: data.note,
+      minutesSpent: data.minutesSpent,
+      partsUsed:
+        data.partsUsed?.trim() || null,
+    },
+    select: {
+      id: true,
+      note: true,
+      minutesSpent: true,
+      partsUsed: true,
+      createdAt: true,
+      technician: {
+        select: {
+          id: true,
+          employeeCode: true,
+          user: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function getWorkLogs(
+  workOrderId: string,
+) {
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: {
+        id: workOrderId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  const logs = await prisma.workLog.findMany({
+    where: {
+      workOrderId,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      id: true,
+      note: true,
+      minutesSpent: true,
+      partsUsed: true,
+      createdAt: true,
+      technician: {
+        select: {
+          id: true,
+          employeeCode: true,
+          user: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const totalMinutes = logs.reduce(
+    (total, log) =>
+      total + log.minutesSpent,
+    0,
+  );
+
+  return {
+    logs,
+    totalMinutes,
+  };
+}
+
+export async function getWorkOrderPhotos(
+  workOrderId: string,
+) {
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: {
+        id: workOrderId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  return prisma.workOrderPhoto.findMany({
+    where: {
+      workOrderId,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      id: true,
+      fileName: true,
+      mimeType: true,
+      fileSize: true,
+      filePath: true,
+      createdAt: true,
+    },
+  });
+}
+
+export async function createWorkOrderPhoto(
+  workOrderId: string,
+  file: {
+    buffer: Buffer;
+    originalname: string;
+    mimetype: string;
+    size: number;
+  },
+) {
+  const workOrder =
+    await prisma.workOrder.findUnique({
+      where: {
+        id: workOrderId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!workOrder) {
+    throw new Error("Work order not found");
+  }
+
+  const uploadDirectory = path.resolve(
+    process.cwd(),
+    "uploads",
+    "work-orders",
+    workOrderId,
+  );
+
+  await mkdir(uploadDirectory, {
+    recursive: true,
+  });
+
+  const extension =
+    path.extname(file.originalname) || ".jpg";
+
+  const fileName = `${randomUUID()}${extension}`;
+
+  const absolutePath = path.join(
+    uploadDirectory,
+    fileName,
+  );
+
+  await writeFile(
+    absolutePath,
+    file.buffer,
+  );
+
+  const relativePath = path
+    .relative(process.cwd(), absolutePath)
+    .replaceAll("\\", "/");
+
+  return prisma.workOrderPhoto.create({
+    data: {
+      workOrderId,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      filePath: `/${relativePath}`,
+    },
+    select: {
+      id: true,
+      fileName: true,
+      mimeType: true,
+      fileSize: true,
+      filePath: true,
+      createdAt: true,
+    },
   });
 }
