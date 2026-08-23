@@ -125,3 +125,30 @@ export const createClientRequestSchema = z.object({
   duplicateConfirmed: z.boolean().optional(),
   agreedDate: z.string().datetime().nullable().optional(),
 });
+
+export const createWorkLogSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .min(1, "Note is required")
+    .max(2000, "Note must not exceed 2000 characters"),
+
+  minutesSpent: z
+    .number()
+    .int("Minutes spent must be a whole number")
+    .positive("Minutes spent must be greater than zero"),
+
+  partsUsed: z
+    .string()
+    .trim()
+    .max(2000, "Parts used must not exceed 2000 characters")
+    .optional(),
+});
+
+export const waitingOnPartsSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description of needed parts is required")
+    .max(1000, "Description must not exceed 1000 characters"),
+});

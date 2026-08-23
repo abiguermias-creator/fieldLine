@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import { workOrderPhotoUpload } from "./work-order-photo-upload.js";
 import {
   createWorkOrderController,
   createClientRequestController,
@@ -10,6 +12,12 @@ import {
   createFollowUpWorkOrderController,
   getAssignmentOptionsController,
   unassignWorkOrderController,
+  moveWorkOrderStatusController,
+  createWorkLogController,
+  getWorkLogsController,
+  getWorkOrderPhotosController,
+  createWorkOrderPhotoController,
+  markWorkOrderWaitingOnPartsController,
 } from "./work-order.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/role.js";
@@ -31,6 +39,48 @@ router.patch("/:id/cancel", requireAuth, cancelWorkOrderController);
 router.get("/", requireAuth, getWorkOrdersController);
 
 router.get("/:id/assignment-options",requireAuth,dispatcherOnly,getAssignmentOptionsController,);
+
+router.patch("/:id/status-action",requireAuth,requireRole("TECHNICIAN"),moveWorkOrderStatusController,);
+
+router.patch("/:id/waiting-on-parts",requireAuth,requireRole("TECHNICIAN"),markWorkOrderWaitingOnPartsController,);
+
+router.post("/:id/work-logs",requireAuth,requireRole("TECHNICIAN"),createWorkLogController,);
+
+router.get("/:id/work-logs",requireAuth,getWorkLogsController,);
+
+router.get("/:id/photos",requireAuth,getWorkOrderPhotosController,);
+
+router.post("/:id/photos",requireAuth,requireRole("TECHNICIAN"),
+  (req, res, next) => {
+    workOrderPhotoUpload.single("photo")(
+      req,
+      res,
+      (error) => {
+        if (error instanceof multer.MulterError) {
+          if (error.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({
+              message:
+                "Photo must be 10 MB or smaller",
+            });
+          }
+
+          return res.status(400).json({
+            message: error.message,
+          });
+        }
+
+        if (error instanceof Error) {
+          return res.status(400).json({
+            message: error.message,
+          });
+        }
+
+        next();
+      },
+    );
+  },
+  createWorkOrderPhotoController,
+);
 
 router.get("/:id", requireAuth, getWorkOrderController);
 

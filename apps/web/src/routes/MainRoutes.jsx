@@ -4,6 +4,7 @@ import { lazy } from 'react';
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
+import RoleRoute from './RoleRoute';
 
 // render dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -18,12 +19,14 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 const Clients = Loadable(lazy(() => import('pages/clients')));
 const Sites = Loadable(lazy(() => import('pages/sites')));
 const WorkOrders = Loadable(lazy(() => import('pages/work-orders')));
-const WorkOrderDetail = Loadable(lazy(() => import('pages/work-orders/detail'))
-);
+const WorkOrderDetail = Loadable(lazy(() => import('pages/work-orders/detail')));
 const Skills = Loadable(lazy(() => import('pages/skills')));
 const Technicians = Loadable(lazy(() => import('pages/technicians')));
+const TechnicianDay = Loadable(lazy(() => import('pages/technician-day')));
 const Equipment = Loadable(lazy(() => import('pages/equipment')));
 const Requests = Loadable(lazy(() => import('pages/requests')));
+const DispatcherBoard = Loadable(lazy(() => import('pages/dispatcher-board')));
+
 const MainRoutes = {
   path: '/',
   element: <ProtectedRoute />,
@@ -68,8 +71,21 @@ const MainRoutes = {
           element: <Equipment />
         },
         {
+          path: 'technician-day',
+          element: <TechnicianDay />
+        },
+        {
           path: 'requests',
           element: <Requests />
+        },
+        {
+          element: <RoleRoute allowedRoles={['DISPATCHER', 'SUPERVISOR']} />,
+          children: [
+            {
+              path: 'dispatcher-board',
+              element: <DispatcherBoard />
+            }
+          ]
         },
         {
           path: 'typography',
@@ -93,4 +109,3 @@ const MainRoutes = {
 };
 
 export default MainRoutes;
-

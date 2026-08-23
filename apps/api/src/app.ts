@@ -1,3 +1,4 @@
+import path from "node:path";
 import cookieParser from "cookie-parser";
 import authRoutes from "./auth/auth.routes.js";
 import express from "express";
@@ -22,6 +23,13 @@ import { prisma } from "./db/client.js";
 
 export function createApp() {
   const app = express();
+
+    app.use(
+    "/uploads",
+    express.static(
+      path.resolve(process.cwd(), "uploads"),
+    ),
+  );
 
   app.use(helmet());
   app.use(express.json({ limit: "1mb" }));

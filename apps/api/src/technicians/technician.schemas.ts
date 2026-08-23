@@ -30,3 +30,12 @@ export const listTechniciansQuerySchema = z.object({
   search: z.string().optional().default(""),
   skillId: z.string().uuid().optional(),
 });
+
+export const updateTechnicianLocationSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export const updateLocationSharingSchema = z.object({
+  enabled: z.boolean(),
+});

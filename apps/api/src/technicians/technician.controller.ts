@@ -1,12 +1,16 @@
 import type { Request, Response } from "express";
+import type { AuthRequest } from "../middleware/auth.js";
 
 import {
   createTechnician,
   getTechnicians,
   getTechnicianById,
+  getMyDay,
   updateTechnician,
   deactivateTechnician,
   activateTechnician,
+  updateTechnicianLocation,
+  updateMyLocationSharing,
 } from "./technician.service.js";
 
 import {
@@ -14,6 +18,8 @@ import {
   updateTechnicianSchema,
   technicianIdSchema,
   listTechniciansQuerySchema,
+  updateTechnicianLocationSchema,
+  updateLocationSharingSchema,
 } from "./technician.schemas.js";
 
 export async function createTechnicianController(req: Request, res: Response) {
@@ -57,6 +63,64 @@ export async function getTechnicianController(req: Request, res: Response) {
     }
 
     res.json(technician);
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+}
+
+export async function getMyDayController(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Authentication required",
+      });
+    }
+
+    const result = await getMyDay(req.user.userId);
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+}
+
+export async function updateTechnicianLocationController(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Authentication required",
+      });
+    }
+
+    const data = updateTechnicianLocationSchema.parse(req.body);
+
+    const result = await updateTechnicianLocation(req.user.userId, data.latitude, data.longitude);
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+}
+
+export async function updateMyLocationSharingController(req: AuthRequest, res: Response) {
+  try {
+    const data = updateLocationSharingSchema.parse(req.body);
+
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const result = await updateMyLocationSharing(req.user.userId, data.enabled);
+
+    res.json(result);
   } catch (error: any) {
     res.status(400).json({
       message: error.message,
