@@ -25,7 +25,21 @@ export const updateWorkOrderSchema = z.object({
 
   isOutdoor: z.boolean().optional(),
 
-  status: z.enum(["NEW","TRIAGED","ASSIGNED","SCHEDULED","IN_PROGRESS","COMPLETED","CLOSED","CANCELLED",]).optional(),
+  status: z.enum([
+    "NEW",
+    "TRIAGED",
+    "SCHEDULED",
+    "ASSIGNED",
+    "EN_ROUTE",
+    "ON_SITE",
+    "IN_PROGRESS",
+    "ON_HOLD",
+    "AWAITING_PARTS",
+    "COMPLETED",
+    "VERIFIED",
+    "CLOSED",
+    "CANCELLED",
+  ]).optional(),
 
   priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
 

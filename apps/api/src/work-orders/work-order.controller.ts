@@ -131,6 +131,18 @@ if (
 }
 
 if (
+  error.message.startsWith("INVALID_TRANSITION:")
+) {
+  const [code, ...messageParts] =
+    error.message.split(": ");
+
+  return res.status(409).json({
+    code,
+    message: messageParts.join(": "),
+  });
+}
+
+if (
   error.message.startsWith("TECHNICIAN_UNAVAILABLE:")
 ) {
   const [code, ...messageParts] =
@@ -454,10 +466,11 @@ export async function moveWorkOrderStatusController(
     }
 
     const workOrder =
-      await moveWorkOrderStatus(
-        req.params.id as string,
-        req.user.userId,
-      );
+  await moveWorkOrderStatus(
+    req.params.id as string,
+    req.user.userId,
+    req.body?.action,
+  );
 
     res.json(workOrder);
   } catch (error) {

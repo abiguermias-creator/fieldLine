@@ -107,9 +107,13 @@ export async function unassignWorkOrder(
   return response.data;
 }
 
-export async function moveWorkOrderStatus(id: string) {
+export async function moveWorkOrderStatus(
+  id: string,
+  action?: 'advance' | 'hold' | 'resume' | 'complete',
+) {
   const response = await api.patch(
     `/work-orders/${id}/status-action`,
+    { action },
   );
 
   return response.data;
