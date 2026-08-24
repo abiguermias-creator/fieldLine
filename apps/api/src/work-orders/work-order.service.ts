@@ -8,6 +8,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
+import { TRANSITIONS } from "@fieldline/shared";
+
 type WorkOrderPriority = "P1" | "P2" | "P3" | "P4";
 
 type WorkOrderStatus =
@@ -2830,19 +2832,25 @@ export async function moveWorkOrderStatus(
     );
   }
 
-  const nextStatusMap: Record<
-    string,
-    "EN_ROUTE" | "ON_SITE" | "IN_PROGRESS" | "COMPLETED"
-  > = {
-    ASSIGNED: "EN_ROUTE",
-    EN_ROUTE: "ON_SITE",
-    ON_SITE: "IN_PROGRESS",
-    IN_PROGRESS: "COMPLETED",
-  };
+  const allowedTechnicianStatuses = [
+  "EN_ROUTE",
+  "ON_SITE",
+  "IN_PROGRESS",
+  "COMPLETED",
+] as const;
 
-  const nextStatus =
-    nextStatusMap[workOrder.status];
+type TechnicianNextStatus =
+  (typeof allowedTechnicianStatuses)[number];
 
+const nextStatus =
+  TRANSITIONS[
+    workOrder.status as keyof typeof TRANSITIONS
+  ].find(
+    (status): status is TechnicianNextStatus =>
+      allowedTechnicianStatuses.includes(
+        status as TechnicianNextStatus,
+      ),
+  );
   if (!nextStatus) {
     throw new Error(
       `Work order cannot move forward from ${workOrder.status}`,

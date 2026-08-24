@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { TRANSITIONS } from '@fieldline/shared';
 
 import {
   Alert,
@@ -997,15 +998,18 @@ console.log('STATUS DEBUG:', {
   isAssignedTechnician,
 });
 
-const statusActionLabels = {
-  ASSIGNED: 'On my way',
-  EN_ROUTE: 'I have arrived',
-  ON_SITE: 'Start work',
-  IN_PROGRESS: 'Mark complete'
-};
+const technicianNextStatus =
+  TRANSITIONS[workOrder.status]?.find((status) =>
+    ['EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED'].includes(status)
+  );
 
 const statusActionLabel =
-  statusActionLabels[workOrder.status];
+  {
+    EN_ROUTE: 'On my way',
+    ON_SITE: 'I have arrived',
+    IN_PROGRESS: 'Start work',
+    COMPLETED: 'Mark complete'
+  }[technicianNextStatus];
 
   const status =
     STATUS_LABELS[workOrder.status] ||
