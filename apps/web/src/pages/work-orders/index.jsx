@@ -859,18 +859,38 @@ export default function WorkOrders() {
                           {workOrder.priority}
                         </TableCell>
 
-                        <TableCell
-  sx={
-    workOrder.status === 'AWAITING_PARTS'
-      ? {
-          fontWeight: 700,
-          backgroundColor: 'warning.light',
-          color: 'warning.contrastText'
-        }
-      : undefined
-  }
->
+                       <TableCell>
   {workOrder.status}
+
+  {workOrder.slaRespondBy &&
+    !workOrder.arrivedAt &&
+    new Date(workOrder.slaRespondBy).getTime() <= Date.now() && (
+      <Typography
+        component="div"
+        sx={{
+          fontWeight: 700,
+          color: 'error.main'
+        }}
+      >
+        BREACHED
+      </Typography>
+    )}
+
+  {workOrder.slaRespondBy &&
+    !workOrder.arrivedAt &&
+    new Date(workOrder.slaRespondBy).getTime() > Date.now() &&
+    new Date(workOrder.slaRespondBy).getTime() - Date.now() <
+      30 * 60 * 1000 && (
+      <Typography
+        component="div"
+        sx={{
+          fontWeight: 700,
+          color: 'warning.main'
+        }}
+      >
+        AT RISK
+      </Typography>
+    )}
 </TableCell>
 
                         <TableCell>

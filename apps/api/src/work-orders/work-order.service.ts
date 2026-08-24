@@ -14,10 +14,38 @@ type WorkOrderStatus =
   | "TRIAGED"
   | "ASSIGNED"
   | "SCHEDULED"
+  | "EN_ROUTE"
+  | "ON_SITE"
   | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "AWAITING_PARTS"
   | "COMPLETED"
+  | "VERIFIED"
   | "CLOSED"
   | "CANCELLED";
+
+const allowedStatusTransitions: Record<
+  WorkOrderStatus,
+  WorkOrderStatus[]
+> = {
+  NEW: ["TRIAGED"],
+  TRIAGED: ["SCHEDULED"],
+  SCHEDULED: ["ASSIGNED"],
+  ASSIGNED: ["SCHEDULED", "EN_ROUTE"],
+  EN_ROUTE: ["ON_SITE"],
+  ON_SITE: ["IN_PROGRESS"],
+  IN_PROGRESS: [
+    "ON_HOLD",
+    "AWAITING_PARTS",
+    "COMPLETED",
+  ],
+  ON_HOLD: ["IN_PROGRESS"],
+  AWAITING_PARTS: ["IN_PROGRESS"],
+  COMPLETED: ["VERIFIED"],
+  VERIFIED: ["CLOSED"],
+  CLOSED: [],
+  CANCELLED: [],
+};
 
 function calculateSlaTargets(
   priority: WorkOrderPriority,
@@ -732,7 +760,7 @@ export async function getWorkOrderById(
 
       events: {
   orderBy: {
-    createdAt: "asc",
+    createdAt: "desc",
   },
   include: {
     actor: {
@@ -899,15 +927,35 @@ if (statusForScheduling !== "TRIAGED") {
   data.technicianId !== existingWorkOrder.technicianId;
 
 const nextStatus =
-  schedulingRequested &&
-  nextScheduledAt &&
-  nextScheduledEndAt
-    ? "SCHEDULED"
-    : data.status !== undefined
-      ? data.status
+  data.status !== undefined
+    ? data.status
+    : schedulingRequested &&
+        nextScheduledAt &&
+        nextScheduledEndAt
+      ? "SCHEDULED"
       : assigningTechnician
         ? "ASSIGNED"
         : undefined;
+
+  if (
+  nextStatus !== undefined &&
+  nextStatus !== existingWorkOrder.status
+) {
+  const allowedNextStatuses =
+    allowedStatusTransitions[
+      existingWorkOrder.status
+    ];
+
+  if (!allowedNextStatuses.includes(nextStatus)) {
+    throw new Error(
+      `INVALID_TRANSITION: ${existingWorkOrder.status} -> ${nextStatus}. Allowed next statuses: ${
+        allowedNextStatuses.length > 0
+          ? allowedNextStatuses.join(", ")
+          : "none"
+      }`,
+    );
+  }
+}
 
   let assignedTechnicianName: string | null = null;
   let assignedTechnicianUserId: string | null = null;
@@ -2914,15 +2962,17 @@ export async function unassignWorkOrder(
 export async function moveWorkOrderStatus(
   id: string,
   actorId: string,
+  action?: "advance" | "hold" | "resume" | "complete"
 ) {
   const workOrder =
     await prisma.workOrder.findUnique({
       where: { id },
       select: {
-        id: true,
-        status: true,
-        technicianId: true,
-      },
+  id: true,
+  status: true,
+  technicianId: true,
+  slaRespondBy: true,
+},
     });
 
   if (!workOrder) {
@@ -2959,42 +3009,123 @@ export async function moveWorkOrderStatus(
     );
   }
 
-  const nextStatusMap: Record<
-    string,
-    "EN_ROUTE" | "ON_SITE" | "IN_PROGRESS" | "COMPLETED"
-  > = {
-    ASSIGNED: "EN_ROUTE",
-    EN_ROUTE: "ON_SITE",
-    ON_SITE: "IN_PROGRESS",
-    IN_PROGRESS: "COMPLETED",
-  };
+    let nextStatus:
+  | "EN_ROUTE"
+  | "ON_SITE"
+  | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "VERIFIED"
+  | "CLOSED";
+    
+  if (
+    workOrder.status === "IN_PROGRESS" &&
+    action === "hold"
+  ) {
+    nextStatus = "ON_HOLD";
+  } else if (
+    workOrder.status === "ON_HOLD" &&
+    action === "resume"
+  ) {
+    nextStatus = "IN_PROGRESS";
+  } else {
+    const nextStatusMap: Record<
+  string,
+  "EN_ROUTE" | "ON_SITE" | "IN_PROGRESS" | "COMPLETED" | "VERIFIED" | "CLOSED"
+> = {
+  ASSIGNED: "EN_ROUTE",
+  EN_ROUTE: "ON_SITE",
+  ON_SITE: "IN_PROGRESS",
+  IN_PROGRESS: "COMPLETED",
+  AWAITING_PARTS: "IN_PROGRESS",
+  COMPLETED: "VERIFIED",
+  VERIFIED: "CLOSED",
+};
 
-  const nextStatus =
-    nextStatusMap[workOrder.status];
+if (
+  workOrder.status === "IN_PROGRESS" &&
+  action === "complete"
+) {
+  const workLog = await prisma.workLog.findFirst({
+    where: {
+      workOrderId: id,
+      minutesSpent: {
+        gt: 0,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
 
-  if (!nextStatus) {
-    throw new Error(
-      `Work order cannot move forward from ${workOrder.status}`,
-    );
+  if (!workLog) {
+    throw new Error("WORK_LOG_REQUIRED");
+  }
+}
+
+    const mappedStatus = nextStatusMap[workOrder.status];
+
+if (!mappedStatus) {
+  throw new Error(
+    `Work order cannot move forward from ${workOrder.status}`,
+  );
+}
+
+nextStatus = mappedStatus;
+
+    if (!nextStatus) {
+      throw new Error(
+        `Work order cannot move forward from ${workOrder.status}`,
+      );
+    }
   }
 
   const updated =
     await prisma.$transaction(
       async (tx) => {
         const data: {
-          status:
-            | "EN_ROUTE"
-            | "ON_SITE"
-            | "IN_PROGRESS"
-            | "COMPLETED";
-          arrivedAt?: Date;
-        } = {
-          status: nextStatus,
-        };
+  status:
+    | "EN_ROUTE"
+    | "ON_SITE"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "COMPLETED"
+    | "VERIFIED"
+    | "CLOSED";
+  arrivedAt?: Date;
+} = {
+  status: nextStatus,
+};
 
         if (nextStatus === "ON_SITE") {
-          data.arrivedAt = new Date();
-        }
+  const arrivedAt = new Date();
+  data.arrivedAt = arrivedAt;
+
+  if (
+    workOrder.slaRespondBy &&
+    arrivedAt <= workOrder.slaRespondBy
+  ) {
+    await tx.workOrderEvent.create({
+      data: {
+        workOrderId: id,
+        actorId,
+        eventType: "RESPONSE_SLA_MET",
+        newValue: arrivedAt.toISOString(),
+        createdAt: arrivedAt,
+      },
+    });
+  } else if (workOrder.slaRespondBy) {
+    await tx.workOrderEvent.create({
+      data: {
+        workOrderId: id,
+        actorId,
+        eventType: "RESPONSE_SLA_BREACHED",
+        newValue: arrivedAt.toISOString(),
+        createdAt: arrivedAt,
+      },
+    });
+  }
+}
 
         const result =
           await tx.workOrder.update({
@@ -3008,12 +3139,9 @@ export async function moveWorkOrderStatus(
           data: {
             workOrderId: id,
             actorId,
-            eventType:
-              "STATUS_CHANGED",
-            oldValue:
-              workOrder.status,
-            newValue:
-              nextStatus,
+            eventType: "STATUS_CHANGED",
+            oldValue: workOrder.status,
+            newValue: nextStatus,
           },
         });
 
@@ -3022,8 +3150,7 @@ export async function moveWorkOrderStatus(
     );
 
   return updated;
-}
-
+  }
 export async function markWorkOrderWaitingOnParts(
   id: string,
   actorId: string,
