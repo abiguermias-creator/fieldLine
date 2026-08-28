@@ -52,7 +52,7 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/jsx-props-no-spreading': 'off',
       'import/order': 'off',
-      'no-console': 'off',
+      'no-console': 'error',
       'no-shadow': 'off',
       'import/no-cycle': 'off',
       'import/no-extraneous-dependencies': 'off',
@@ -87,3 +87,4 @@ export default [
     files: ['src/**/*.{js,jsx}']
   }
 ];
+

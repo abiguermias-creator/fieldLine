@@ -75,7 +75,6 @@ export default function Technicians() {
         }
       );
     } catch (error) {
-      console.error('Failed to load technicians:', error);
 
       setMessage(
         error.response?.data?.message ||
@@ -90,7 +89,6 @@ export default function Technicians() {
 
       setSkills(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to load skills:', error);
 
       setSkillMessage(
         error.response?.data?.message ||
@@ -114,10 +112,6 @@ export default function Technicians() {
       setTechnicianSkills(Array.isArray(data) ? data : []);
       setSkillMessage('');
     } catch (error) {
-      console.error(
-        'Failed to load technician skills:',
-        error
-      );
 
       setTechnicianSkills([]);
 
@@ -168,7 +162,6 @@ export default function Technicians() {
 
       await loadTechnicians();
     } catch (error) {
-      console.error(error);
 
       setMessage(
         error.response?.data?.message ||
@@ -200,7 +193,6 @@ export default function Technicians() {
         );
       }
     } catch (error) {
-      console.error(error);
 
       setMessage(
         error.response?.data?.message ||
@@ -232,7 +224,6 @@ export default function Technicians() {
         );
       }
     } catch (error) {
-      console.error(error);
 
       setMessage(
         error.response?.data?.message ||
@@ -276,7 +267,6 @@ export default function Technicians() {
         selectedTechnician.id
       );
     } catch (error) {
-      console.error(error);
 
       setSkillMessage(
         error.response?.data?.message ||
@@ -303,7 +293,6 @@ export default function Technicians() {
         selectedTechnician.id
       );
     } catch (error) {
-      console.error(error);
 
       setSkillMessage(
         error.response?.data?.message ||

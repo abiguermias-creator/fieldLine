@@ -32,8 +32,7 @@ export default function SettingTab() {
       try {
         const data = await getMyDay();
         setLocationSharing(Boolean(data?.technician?.locationSharingEnabled));
-      } catch (error) {
-        console.error('Failed to load location sharing setting:', error);
+      } catch {
       }
     }
 
@@ -49,8 +48,7 @@ export default function SettingTab() {
       const result = await updateMyLocationSharing(enabled);
 
       setLocationSharing(Boolean(result?.locationSharingEnabled));
-    } catch (error) {
-      console.error('Failed to update location sharing:', error);
+    } catch {
     } finally {
       setUpdatingLocationSharing(false);
     }
@@ -104,3 +102,4 @@ export default function SettingTab() {
     </List>
   );
 }
+

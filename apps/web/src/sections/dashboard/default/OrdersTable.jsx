@@ -15,9 +15,8 @@ export default function OrderTable() {
       try {
         const data = await getWorkOrders();
         setRows(data.items);
-      } catch (error) {
-        console.error("Failed to load work orders:", error);
-      }
+      } catch {
+}
     }
 
     loadWorkOrders();
@@ -64,3 +63,4 @@ export default function OrderTable() {
     </Box>
   );
 }
+

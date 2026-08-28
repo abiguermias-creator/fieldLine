@@ -31,7 +31,6 @@ export default function Skills() {
       const data = await getSkills();
       setSkills(data);
     } catch (error) {
-      console.error('Failed to load skills:', error);
       setMessage(
         error.response?.data?.message || 'Failed to load skills'
       );
@@ -55,7 +54,6 @@ export default function Skills() {
 
       loadSkills();
     }  catch (error) {
-  console.error(error);
 
   const responseMessage = error.response?.data?.message;
 
@@ -76,7 +74,6 @@ export default function Skills() {
 
       loadSkills();
     } catch (error) {
-      console.error(error);
 
       setMessage(
         error.response?.data?.message ||

@@ -28,8 +28,7 @@ export default function TechnicianDay() {
 
       const result = await getMyDay();
       setData(result);
-    } catch (err) {
-      console.error('Failed to load technician day:', err);
+    } catch {
       setError(err?.response?.data?.message || 'Failed to load your assignments.');
     } finally {
       setLoading(false);
@@ -68,13 +67,11 @@ export default function TechnicianDay() {
             } else if (result?.reason === 'LOCATION_SHARING_DISABLED') {
               setLocationStatus('disabled');
             }
-          } catch (err) {
-            console.error('Failed to send location:', err);
+          } catch {
             setLocationStatus('error');
           }
         },
         (err) => {
-          console.error('Location permission/error:', err);
           setLocationStatus('permission-denied');
         }
       );
@@ -274,3 +271,4 @@ export default function TechnicianDay() {
     </Stack>
   );
 }
+

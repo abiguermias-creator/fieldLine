@@ -137,8 +137,7 @@ export default function WorkOrders() {
           pages: 0
         }
       );
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Failed to load work orders.');
     } finally {
       setLoadingList(false);
@@ -175,8 +174,7 @@ export default function WorkOrders() {
             techniciansResponse ||
             []
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         setError(
           'Failed to load clients, sites, or technicians.'
         );
@@ -260,8 +258,7 @@ export default function WorkOrders() {
 
       setPage(1);
       await loadWorkOrders(1);
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       setError(
         err.response?.data?.message ||
@@ -949,3 +946,4 @@ export default function WorkOrders() {
     </Stack>
   );
 }
+

@@ -142,6 +142,7 @@ const [workLogSuccess, setWorkLogSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [statusActionSaving, setStatusActionSaving] = useState(false);
+  const [statusActionError, setStatusActionError] = useState('');
 
    const [waitingOnPartsDialogOpen, setWaitingOnPartsDialogOpen] =
   useState(false);
@@ -209,8 +210,7 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
       }
 
       setWorkOrder(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       if (err.response?.status === 404) {
         setNotFound(true);
@@ -234,19 +234,9 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
       setLoadingAssignmentOptions(true);
 
       const data = await getAssignmentOptions(id);
-
-      console.log(
-        'ASSIGNMENT OPTIONS RESPONSE:',
-        data
-      );
-
-      setAssignmentOptions(data);
-    } catch (error) {
-      console.error(
-        'Failed to load assignment options:',
-        error
-      );
-      setAssignmentOptions(null);
+setAssignmentOptions(data);
+    } catch {
+setAssignmentOptions(null);
     } finally {
       setLoadingAssignmentOptions(false);
     }
@@ -273,8 +263,7 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
             response ||
             []
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         setSkills([]);
       } finally {
         setLoadingSkills(false);
@@ -417,8 +406,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrder();
-        } catch (err) {
-      console.error(err);
+        } catch {
 
       if (
         err.response?.status === 409 &&
@@ -463,8 +451,7 @@ setEditScheduledEndAt(
     const data = await getWorkLogs(id);
 
     setWorkLogs(data?.logs || []);
-  } catch (err) {
-    console.error(err);
+  } catch {
     setWorkLogError(
       err?.response?.data?.message ||
         'Failed to load work logs.'
@@ -511,8 +498,7 @@ setEditScheduledEndAt(
       await loadWorkLogs();
 
       setWorkLogSuccess('Work log added successfully.');
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       setWorkLogError(
         err?.response?.data?.message ||
@@ -531,8 +517,7 @@ setEditScheduledEndAt(
     const data = await getWorkOrderPhotos(id);
 
     setWorkOrderPhotos(data || []);
-  } catch (err) {
-    console.error(err);
+  } catch {
 
     setPhotoError(
       err?.response?.data?.message ||
@@ -594,8 +579,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrderPhotos();
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       setPhotoError(
         err?.response?.data?.message ||
@@ -645,8 +629,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrder();
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       setSaveError(
         err.response?.data?.message ||
@@ -682,8 +665,7 @@ setEditScheduledEndAt(
     );
 
     await loadAssignmentOptions();
-  } catch (err) {
-    console.error(err);
+  } catch {
 
     setAssignmentError(
       err.response?.data?.message ||
@@ -701,17 +683,18 @@ async function handleMoveWorkOrderStatus() {
 
   try {
     setStatusActionSaving(true);
+    setStatusActionError('');
     setSuccessMessage('');
 
     const updated = await moveWorkOrderStatus(workOrder.id);
 
-console.log('UPDATED WORK ORDER:', updated);
-
-setWorkOrder(updated);
+    setWorkOrder(updated);
     setSuccessMessage('Work order status updated successfully.');
-  } catch (err) {
-    console.error(err);
-
+  } catch {
+    setStatusActionError(
+      err.response?.data?.message ||
+        'Failed to update work order status.'
+    );
   } finally {
     setStatusActionSaving(false);
   }
@@ -747,8 +730,7 @@ async function handleMarkWaitingOnParts() {
     setSuccessMessage(
       'Work order marked as waiting on parts.'
     );
-  } catch (err) {
-    console.error(err);
+  } catch {
 
     setWaitingOnPartsError(
       err.response?.data?.message ||
@@ -790,8 +772,7 @@ async function handleUnassign() {
     );
 
     await loadAssignmentOptions();
-  } catch (err) {
-    console.error(err);
+  } catch {
 
     setUnassignError(
       err.response?.data?.message ||
@@ -845,8 +826,7 @@ async function handleUnassign() {
     );
 
     await loadAssignmentOptions();
-  } catch (err) {
-    console.error(err);
+  } catch {
 
     setEquipmentAssignmentError(
       err.response?.data?.message ||
@@ -899,8 +879,7 @@ async function handleUnassign() {
       );
 
       await loadWorkOrder();
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       if (err.response?.status === 409) {
         setCancelError(
@@ -988,16 +967,6 @@ async function handleUnassign() {
     const isAssignedTechnician =
   user?.role === 'TECHNICIAN' &&
   workOrder.technician?.user?.id === user?.id;
-
-console.log('STATUS DEBUG:', {
-  userRole: user?.role,
-  userId: user?.id,
-  technicianId: workOrder?.technicianId,
-  technicianUserId: workOrder?.technician?.user?.id,
-  workOrderStatus: workOrder?.status,
-  isAssignedTechnician,
-});
-
 const technicianNextStatus =
   TRANSITIONS[workOrder.status]?.find((status) =>
     ['EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED'].includes(status)
@@ -1340,6 +1309,12 @@ const statusActionLabel =
           ? 'Updating...'
           : statusActionLabel}
       </Button>
+
+      {statusActionError && (
+  <Typography color="error">
+    {statusActionError}
+  </Typography>
+)}
 
       {workOrder.status === 'IN_PROGRESS' && (
         <Button
@@ -2690,3 +2665,7 @@ const statusActionLabel =
     </Stack>
   );
 }
+
+
+
+

@@ -58,8 +58,7 @@ export default function ClientRequest() {
         const response = await getSites();
 
         setSites(response.items || response || []);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setError('Failed to load your company sites.');
       } finally {
         setLoadingSites(false);
@@ -101,8 +100,7 @@ export default function ClientRequest() {
       setPriority('');
       setP1Confirmed(false);
       setDuplicateConfirmed(false);
-    } catch (err) {
-      console.error(err);
+    } catch {
 
       const responseData = err.response?.data;
 
@@ -313,3 +311,4 @@ export default function ClientRequest() {
     </Stack>
   );
 }
+
