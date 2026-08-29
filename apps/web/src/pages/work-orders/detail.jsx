@@ -503,25 +503,6 @@ setEditScheduledEndAt(
   }
 }
 
-function openUnassignDialog() {
-  if (!workOrder) {
-    return;
-  }
-
-  if (
-    workOrder.status === 'COMPLETED' ||
-    workOrder.status === 'CLOSED' ||
-    workOrder.status === 'CANCELLED' ||
-    !workOrder.technicianId
-  ) {
-    return;
-  }
-
-  setUnassignReason('');
-  setUnassignError('');
-  setUnassignDialogOpen(true);
-}
-
 async function handleUnassign() {
   if (!workOrder) {
     return;

@@ -2,6 +2,7 @@ import { prisma } from "../db/client.js";
 import { geocodeAddress } from "../geocode/geocode.service.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { getWeatherForecast } from "../weather/weather.service.js";
+import { checkAssignment } from "../services/scheduling.js";
 
 type WorkOrderPriority = "P1" | "P2" | "P3" | "P4";
 
@@ -772,6 +773,7 @@ export async function updateWorkOrder(
       },
       select: {
         id: true,
+        reference: true,
         siteId: true,
         title: true,
         description: true,
@@ -969,51 +971,6 @@ const nextStatus =
       },
     });
 
-  if (requiredSkills.length > 0) {
-    const technicianSkills =
-      await prisma.technicianSkill.findMany({
-        where: {
-          technicianId: data.technicianId,
-          skillId: {
-            in: requiredSkills.map(
-              (skill) => skill.skillId,
-            ),
-          },
-        },
-        select: {
-          skillId: true,
-          certificationExpiresAt: true,
-        },
-      });
-
-    const technicianSkillMap = new Map(
-      technicianSkills.map((skill) => [
-        skill.skillId,
-        skill,
-      ]),
-    );
-
-    for (const requiredSkill of requiredSkills) {
-      const technicianSkill =
-        technicianSkillMap.get(requiredSkill.skillId);
-
-      if (!technicianSkill) {
-        throw new Error(
-          `SKILL_NOT_HELD: Technician does not hold required skill ${requiredSkill.skill.code}`,
-        );
-      }
-
-      if (
-        technicianSkill.certificationExpiresAt &&
-        technicianSkill.certificationExpiresAt <
-          nextScheduledAt
-      ) {
-        throw new Error(
-          `SKILL_EXPIRED: Certification for skill ${requiredSkill.skill.code} expired on ${technicianSkill.certificationExpiresAt.toISOString()}`,
-        );
-      }
-    }
-  }
 }
 
   const nextPriority =
@@ -1058,434 +1015,292 @@ const nextStatus =
 
   const result = await prisma.$transaction(
     async (tx) => {
+         let dailyHoursOverrideUsed = false;
+            if (
+        (data.technicianId ?? existingWorkOrder.technicianId) &&
+        nextScheduledAt &&
+        nextScheduledEndAt
+      ) {
+        const technicianId =
+          data.technicianId ?? existingWorkOrder.technicianId;
 
-            const nextEquipmentId =
-        data.equipmentId !== undefined
-          ? data.equipmentId
-          : existingWorkOrder.equipmentId;
-
-      if (nextEquipmentId) {
-        const equipment =
-          await tx.equipment.findUnique({
+        const technician =
+          await tx.technicianProfile.findUnique({
             where: {
-              id: nextEquipmentId,
+              id: technicianId!,
             },
             select: {
               id: true,
-              isActive: true,
+              maxWorkingMinutesPerDay: true,
+              user: {
+                select: {
+                  fullName: true,
+                },
+              },
             },
           });
 
-        if (!equipment) {
-          throw new Error("Equipment not found");
+        if (!technician) {
+          throw new Error("Technician not found");
         }
 
-        if (!equipment.isActive) {
-          throw new Error(
-            "EQUIPMENT_UNAVAILABLE: Selected equipment is inactive",
-          );
+        const currentSite =
+          await tx.site.findUnique({
+            where: {
+              id: existingWorkOrder.siteId,
+            },
+            select: {
+              id: true,
+              latitude: true,
+              longitude: true,
+            },
+          });
+
+        if (!currentSite) {
+          throw new Error("Site not found");
         }
 
-        if (
-          nextScheduledAt &&
-          nextScheduledEndAt
-        ) {
-          const conflictingWorkOrder =
-            await tx.workOrder.findFirst({
-              where: {
-                equipmentId: nextEquipmentId,
-                id: {
-                  not: id,
-                },
-                status: {
-                  notIn: [
-                    "COMPLETED",
-                    "CLOSED",
-                    "CANCELLED",
-                  ],
-                },
-                scheduledAt: {
-                  not: null,
-                },
-                scheduledEndAt: {
-                  not: null,
-                },
-                AND: [
-                  {
-                    scheduledAt: {
-                      lt: nextScheduledEndAt,
-                    },
-                  },
-                  {
-                    scheduledEndAt: {
-                      gt: nextScheduledAt,
-                    },
-                  },
+        const requiredSkillRows =
+          await tx.workOrderSkill.findMany({
+            where: {
+              workOrderId: id,
+            },
+            select: {
+              skillId: true,
+            },
+          });
+
+        const technicianSkills =
+          await tx.technicianSkill.findMany({
+            where: {
+              technicianId: technicianId!,
+              skillId: {
+                in: requiredSkillRows.map(
+                  (skill) => skill.skillId,
+                ),
+              },
+            },
+            select: {
+              skillId: true,
+              certificationExpiresAt: true,
+            },
+          });
+
+        const sameDayAssignments =
+          await tx.workOrder.findMany({
+            where: {
+              technicianId: technicianId!,
+              id: {
+                not: id,
+              },
+              status: {
+                notIn: [
+                  "COMPLETED",
+                  "CLOSED",
+                  "CANCELLED",
                 ],
               },
+              scheduledAt: {
+                not: null,
+              },
+              scheduledEndAt: {
+                not: null,
+              },
+            },
+            select: {
+              reference: true,
+              scheduledAt: true,
+              scheduledEndAt: true,
+              site: {
+                select: {
+                  latitude: true,
+                  longitude: true,
+                },
+              },
+            },
+          });
+
+        const equipmentIds =
+          data.equipmentId ??
+          existingWorkOrder.equipmentId;
+
+        const equipmentRows = equipmentIds
+          ? await tx.equipment.findMany({
+              where: {
+                id: equipmentIds,
+              },
               select: {
-  id: true,
-  reference: true,
-  scheduledAt: true,
-  scheduledEndAt: true,
-  site: {
-    select: {
-      latitude: true,
-      longitude: true,
-    },
-  },
-},
-            });
+                id: true,
+                code: true,
+              },
+            })
+          : [];
 
-          if (conflictingWorkOrder) {
-            throw new Error(
-              `EQUIPMENT_UNAVAILABLE: Equipment is already assigned to work order ${conflictingWorkOrder.reference} from ${conflictingWorkOrder.scheduledAt?.toISOString()} to ${conflictingWorkOrder.scheduledEndAt?.toISOString()}`,
-            );
-          }
-        }
-      }
+        const equipmentContext =
+          await Promise.all(
+            equipmentRows.map(
+              async (equipment) => {
+                const conflicts =
+                  await tx.workOrder.findMany({
+                    where: {
+                      equipmentId: equipment.id,
+                      id: {
+                        not: id,
+                      },
+                      status: {
+                        notIn: [
+                          "COMPLETED",
+                          "CLOSED",
+                          "CANCELLED",
+                        ],
+                      },
+                      scheduledAt: {
+                        not: null,
+                        lt: nextScheduledEndAt,
+                      },
+                      scheduledEndAt: {
+                        not: null,
+                        gt: nextScheduledAt,
+                      },
+                    },
+                    select: {
+                      reference: true,
+                    },
+                  });
 
-      if (
-  (data.technicianId ?? existingWorkOrder.technicianId) &&
-  nextScheduledAt &&
-  nextScheduledEndAt
-) {
-  const conflictingWorkOrder =
-    await tx.workOrder.findFirst({
+               return {
+  id: equipment.id,
+  code: equipment.code,
+  conflicts: conflicts.map(
+    (conflict) => ({
+      workOrderReference:
+        conflict.reference,
+    }),
+  ),
+};
+              },
+            ),
+          );
+
+
+        const assignmentContext = {
+          workOrder: {
+            id: existingWorkOrder.id,
+            reference: existingWorkOrder.reference,
+            status: existingWorkOrder.status,
+            requiredSkillIds:
+              requiredSkillRows.map(
+                (skill) => skill.skillId,
+              ),
+            site: currentSite,
+          },
+
+          technician: {
+            id: technician.id,
+            fullName: technician.user.fullName,
+            maxDailyMinutes:
+              technician.maxWorkingMinutesPerDay,
+            skills: technicianSkills.map(
+              (skill) => ({
+                skillId: skill.skillId,
+                certifiedUntil:
+                  skill.certificationExpiresAt,
+              }),
+            ),
+            sameDayAssignments:
+              sameDayAssignments
+                .filter(
+                  (assignment) =>
+                    assignment.scheduledAt &&
+                    assignment.scheduledEndAt,
+                )
+                .map((assignment) => ({
+                  workOrderReference:
+                    assignment.reference,
+                  startsAt:
+                    assignment.scheduledAt!,
+                  endsAt:
+                    assignment.scheduledEndAt!,
+                  site: assignment.site,
+                })),
+          },
+
+          equipment: equipmentContext,
+
+          proposed: {
+            startsAt: nextScheduledAt,
+            endsAt: nextScheduledEndAt,
+          },
+
+          travelEstimate: {
+            minutes: 0,
+            source: "unknown" as const,
+          },
+        };
+
+        const assignmentCheck =
+          checkAssignment(
+            assignmentContext,
+            new Date(),
+          );
+          const dailyHoursViolation =
+  assignmentCheck.violations.find(
+    (violation) =>
+      violation.code === "DAILY_HOURS_EXCEEDED",
+  );
+
+if (dailyHoursViolation) {
+  const actor =
+    await tx.user.findUnique({
       where: {
-        technicianId:
-          data.technicianId ??
-          existingWorkOrder.technicianId,
-        id: {
-          not: id,
-        },
-        status: {
-          notIn: [
-            "COMPLETED",
-            "CLOSED",
-            "CANCELLED",
-          ],
-        },
-        scheduledAt: {
-          not: null,
-        },
-        scheduledEndAt: {
-          not: null,
-        },
-        AND: [
-          {
-            scheduledAt: {
-              lt: nextScheduledEndAt,
-            },
-          },
-          {
-            scheduledEndAt: {
-              gt: nextScheduledAt,
-            },
-          },
-        ],
+        id: actorId,
       },
       select: {
-  id: true,
-  reference: true,
-  scheduledAt: true,
-  scheduledEndAt: true,
-  site: {
-    select: {
-      latitude: true,
-      longitude: true,
-    },
-  },
-},
-    });
-
-  if (conflictingWorkOrder) {
-    throw new Error(
-      `TECHNICIAN_UNAVAILABLE: Technician is already assigned to work order ${conflictingWorkOrder.reference} from ${conflictingWorkOrder.scheduledAt?.toISOString()} to ${conflictingWorkOrder.scheduledEndAt?.toISOString()}`,
-    );
-  }
-  const previousWorkOrder =
-  await tx.workOrder.findFirst({
-    where: {
-      technicianId:
-        data.technicianId ??
-        existingWorkOrder.technicianId,
-      id: {
-        not: id,
-      },
-      status: {
-        notIn: [
-          "COMPLETED",
-          "CLOSED",
-          "CANCELLED",
-        ],
-      },
-      scheduledAt: {
-        not: null,
-        lt: nextScheduledAt,
-      },
-      scheduledEndAt: {
-        not: null,
-        lte: nextScheduledAt,
-      },
-    },
-    orderBy: {
-      scheduledEndAt: "desc",
-    },
-    select: {
-      id: true,
-      reference: true,
-      scheduledAt: true,
-      scheduledEndAt: true,
-      site: {
-        select: {
-          latitude: true,
-          longitude: true,
-        },
-      },
-    },
-  });
-
-if (
-  previousWorkOrder?.scheduledEndAt &&
-  previousWorkOrder.site.latitude !== null &&
-  previousWorkOrder.site.longitude !== null
-) {
-  const currentSite =
-    await tx.site.findUnique({
-      where: {
-        id: existingWorkOrder.siteId,
-      },
-      select: {
-        latitude: true,
-        longitude: true,
+        role: true,
       },
     });
+
+  const isSupervisor =
+    actor?.role === "SUPERVISOR";
 
   if (
-    currentSite &&
-    currentSite?.latitude !== null &&
-    currentSite?.longitude !== null
+    data.overrideDailyHours === true &&
+    data.overrideReason?.trim() &&
+    isSupervisor
   ) {
-    const travel =
-      await getRoutingTravelTime(
-        previousWorkOrder.site.latitude,
-        previousWorkOrder.site.longitude,
-        currentSite.latitude,
-        currentSite.longitude,
-      );
-
-    if (travel) {
-      const availableTravelMinutes =
-        Math.floor(
-          (nextScheduledAt.getTime() -
-            previousWorkOrder.scheduledEndAt.getTime()) /
-            (1000 * 60),
-        );
-
-      if (
-        travel.minutes >
-        availableTravelMinutes
-      ) {
-        throw new Error(
-          `INSUFFICIENT_TRAVEL_TIME: Required ${travel.minutes} minutes but only ${Math.max(
-            0,
-            availableTravelMinutes,
-          )} minutes available between work order ${previousWorkOrder.reference} and this assignment`,
-        );
-      }
-    }
+    dailyHoursOverrideUsed = true;
+  } else if (
+    data.overrideDailyHours === true &&
+    !isSupervisor
+  ) {
+    throw new Error(
+      "DAILY_HOURS_OVERRIDE_REQUIRES_SUPERVISOR",
+    );
+  } else {
+    throw new Error(
+      `${dailyHoursViolation.code}: ${dailyHoursViolation.message}`,
+    );
   }
 }
-} 
+
+const blockingViolation =
+  assignmentCheck.violations.find(
+    (violation) =>
+      !violation.overridable,
+  );
+
+if (blockingViolation) {
+  throw new Error(
+    `${blockingViolation.code}: ${blockingViolation.message}`,
+  );
+}
+      }
+
 
       const nextTechnicianId =
         data.technicianId !== undefined
           ? data.technicianId
           : existingWorkOrder.technicianId;
-
-      let dailyHoursOverrideUsed = false;
-
-      if (
-        nextTechnicianId &&
-        nextScheduledAt &&
-        nextScheduledEndAt
-      ) {
-        const technician =
-          await tx.technicianProfile.findUnique({
-            where: {
-              id: nextTechnicianId,
-            },
-            select: {
-              maxWorkingMinutesPerDay: true,
-              user: {
-                select: {
-                  role: true,
-                },
-              },
-            },
-          });
-
-        if (technician) {
-          const dayStart = new Date(
-            nextScheduledAt,
-          );
-          dayStart.setUTCHours(
-            0,
-            0,
-            0,
-            0,
-          );
-
-          const dayEnd = new Date(
-            dayStart,
-          );
-          dayEnd.setUTCDate(
-            dayEnd.getUTCDate() + 1,
-          );
-
-          const assignments =
-            await tx.workOrder.findMany({
-              where: {
-                technicianId:
-                  nextTechnicianId,
-                id: {
-                  not: id,
-                },
-                status: {
-                  notIn: [
-                    "COMPLETED",
-                    "CLOSED",
-                    "CANCELLED",
-                  ],
-                },
-                scheduledAt: {
-                  not: null,
-                  lt: dayEnd,
-                },
-                scheduledEndAt: {
-                  not: null,
-                  gt: dayStart,
-                },
-              },
-              select: {
-                scheduledAt: true,
-                scheduledEndAt: true,
-                estimatedDuration: true,
-              },
-            });
-
-          const assignedMinutesToday =
-            assignments.reduce(
-              (
-                total,
-                assignment,
-              ) => {
-                if (
-                  !assignment.scheduledAt
-                ) {
-                  return total;
-                }
-
-                const assignmentStart =
-                  Math.max(
-                    assignment.scheduledAt.getTime(),
-                    dayStart.getTime(),
-                  );
-
-                const assignmentEnd =
-                  assignment.scheduledEndAt
-                    ? Math.min(
-                        assignment.scheduledEndAt.getTime(),
-                        dayEnd.getTime(),
-                      )
-                    : Math.min(
-                        assignment.scheduledAt.getTime() +
-                          (assignment.estimatedDuration ??
-                            0) *
-                            60 *
-                            1000,
-                        dayEnd.getTime(),
-                      );
-
-                if (
-                  assignmentEnd <=
-                  assignmentStart
-                ) {
-                  return total;
-                }
-
-                return (
-                  total +
-                  (assignmentEnd -
-                    assignmentStart) /
-                    (1000 * 60)
-                );
-              },
-              0,
-            );
-
-          const requestedMinutes =
-            Math.max(
-              0,
-              (
-                nextScheduledEndAt.getTime() -
-                nextScheduledAt.getTime()
-              ) /
-                (1000 * 60),
-            );
-
-          const dailyLimit =
-            technician.maxWorkingMinutesPerDay;
-
-          const totalMinutes =
-            assignedMinutesToday +
-            requestedMinutes;
-
-          if (
-            totalMinutes >
-            dailyLimit
-          ) {
-                        const actor =
-              await tx.user.findUnique({
-                where: {
-                  id: actorId,
-                },
-                select: {
-                  role: true,
-                },
-              });
-
-            const isSupervisor =
-              actor?.role ===
-              "SUPERVISOR";
-
-            if (
-              data.overrideDailyHours ===
-                true &&
-              data.overrideReason?.trim() &&
-              isSupervisor
-            ) {
-              dailyHoursOverrideUsed =
-                true;
-            } else if (
-              data.overrideDailyHours ===
-                true &&
-              !isSupervisor
-            ) {
-              throw new Error(
-                "DAILY_HOURS_OVERRIDE_REQUIRES_SUPERVISOR",
-              );
-            } else {
-              throw new Error(
-                `DAILY_HOURS_EXCEEDED: Current total is ${Math.round(
-                  assignedMinutesToday,
-                )} minutes and maximum is ${dailyLimit} minutes`,
-              );
-            }
-          }
-        }
-      }
 
       const events: Array<{
         eventType: string;
