@@ -1182,6 +1182,65 @@ const nextStatus =
             ),
           );
 
+                  const previousAssignment = sameDayAssignments
+          .filter(
+            (assignment) =>
+              assignment.scheduledEndAt &&
+              assignment.scheduledEndAt <= nextScheduledAt,
+          )
+          .sort(
+            (a, b) =>
+              b.scheduledEndAt!.getTime() -
+              a.scheduledEndAt!.getTime(),
+          )[0];
+
+        let travelEstimate: {
+          minutes: number;
+          source: "routing" | "straight-line" | "unknown";
+        } = {
+          minutes: 0,
+          source: "unknown",
+        };
+
+        if (
+          previousAssignment &&
+          previousAssignment.site.latitude !== null &&
+          previousAssignment.site.longitude !== null &&
+          currentSite.latitude !== null &&
+          currentSite.longitude !== null
+        ) {
+          const routingResult = await getRoutingTravelTime(
+            previousAssignment.site.latitude,
+            previousAssignment.site.longitude,
+            currentSite.latitude,
+            currentSite.longitude,
+          );
+
+          if (routingResult) {
+            travelEstimate = {
+              minutes: routingResult.minutes,
+              source: "routing",
+            };
+          } else {
+            const distanceKm = calculateDistanceKm(
+              previousAssignment.site.latitude,
+              previousAssignment.site.longitude,
+              currentSite.latitude,
+              currentSite.longitude,
+            );
+
+            const estimatedMinutes = Math.max(
+              1,
+              Math.round((distanceKm / 40) * 60),
+            );
+
+            travelEstimate = {
+              minutes: estimatedMinutes,
+              source: "straight-line",
+            };
+          }
+        }
+
 
         const assignmentContext = {
           workOrder: {
@@ -1232,10 +1291,7 @@ const nextStatus =
             endsAt: nextScheduledEndAt,
           },
 
-          travelEstimate: {
-            minutes: 0,
-            source: "unknown" as const,
-          },
+          travelEstimate,
         };
 
         const assignmentCheck =
