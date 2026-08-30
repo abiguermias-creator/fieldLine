@@ -3,7 +3,7 @@ import { geocodeAddress } from "../geocode/geocode.service.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { getWeatherForecast } from "../weather/weather.service.js";
 import { checkAssignment } from "../services/scheduling.js";
-
+import { logger } from "../lib/logger.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -300,10 +300,7 @@ async function getRoutingTravelTime(
       distanceKm,
     };
   } catch (error) {
-    console.error(
-      "Routing failed:",
-      error,
-    );
+    logger.error({ error }, "Routing failed");
 
     return null;
   }
