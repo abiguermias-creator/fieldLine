@@ -210,7 +210,7 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
       }
 
       setWorkOrder(data);
-    } catch {
+    } catch (err) {
 
       if (err.response?.status === 404) {
         setNotFound(true);
@@ -406,7 +406,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrder();
-        } catch {
+        } catch (err) {
 
       if (
         err.response?.status === 409 &&
@@ -451,7 +451,7 @@ setEditScheduledEndAt(
     const data = await getWorkLogs(id);
 
     setWorkLogs(data?.logs || []);
-  } catch {
+  } catch (err) {
     setWorkLogError(
       err?.response?.data?.message ||
         'Failed to load work logs.'
@@ -498,7 +498,7 @@ setEditScheduledEndAt(
       await loadWorkLogs();
 
       setWorkLogSuccess('Work log added successfully.');
-    } catch {
+    } catch (err) {
 
       setWorkLogError(
         err?.response?.data?.message ||
@@ -517,7 +517,7 @@ setEditScheduledEndAt(
     const data = await getWorkOrderPhotos(id);
 
     setWorkOrderPhotos(data || []);
-  } catch {
+  } catch (err) {
 
     setPhotoError(
       err?.response?.data?.message ||
@@ -579,7 +579,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrderPhotos();
-    } catch {
+    } catch (err) {
 
       setPhotoError(
         err?.response?.data?.message ||
@@ -629,7 +629,7 @@ setEditScheduledEndAt(
       );
 
       await loadWorkOrder();
-    } catch {
+    } catch (err) {
 
       setSaveError(
         err.response?.data?.message ||
@@ -665,7 +665,7 @@ setEditScheduledEndAt(
     );
 
     await loadAssignmentOptions();
-  } catch {
+  } catch (err) {
 
     setAssignmentError(
       err.response?.data?.message ||
@@ -690,7 +690,7 @@ async function handleMoveWorkOrderStatus() {
 
     setWorkOrder(updated);
     setSuccessMessage('Work order status updated successfully.');
-  } catch {
+  } catch (err) {
     setStatusActionError(
       err.response?.data?.message ||
         'Failed to update work order status.'
@@ -730,7 +730,7 @@ async function handleMarkWaitingOnParts() {
     setSuccessMessage(
       'Work order marked as waiting on parts.'
     );
-  } catch {
+  } catch (err) {
 
     setWaitingOnPartsError(
       err.response?.data?.message ||
@@ -772,7 +772,7 @@ async function handleUnassign() {
     );
 
     await loadAssignmentOptions();
-  } catch {
+  } catch (err) {
 
     setUnassignError(
       err.response?.data?.message ||
@@ -826,7 +826,7 @@ async function handleUnassign() {
     );
 
     await loadAssignmentOptions();
-  } catch {
+  } catch (err) {
 
     setEquipmentAssignmentError(
       err.response?.data?.message ||
@@ -879,7 +879,7 @@ async function handleUnassign() {
       );
 
       await loadWorkOrder();
-    } catch {
+    } catch (err) {
 
       if (err.response?.status === 409) {
         setCancelError(

@@ -1,3 +1,5 @@
+import { logger } from "../lib/logger.js";
+
 type WeatherForecast = {
   available: true;
   location: {
@@ -148,10 +150,7 @@ export async function getWeatherForecast(
           : null,
     };
   } catch (error) {
-    console.error(
-      "Weather forecast unavailable:",
-      error,
-    );
+    logger.error({ error }, "Weather forecast unavailable");
 
     return null;
   }

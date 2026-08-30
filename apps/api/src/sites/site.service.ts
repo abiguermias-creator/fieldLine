@@ -1,5 +1,6 @@
 import { prisma } from "../db/client.js";
 import { geocodeSite } from "../geocode/geocode.service.js";
+import { logger } from "../lib/logger.js";
 
 export async function createSite(data: {
   clientId: string;
@@ -14,7 +15,7 @@ export async function createSite(data: {
 
   // background geocoding
   geocodeSite(site.id).catch((error) => {
-    console.error("Background geocoding failed:", error);
+    logger.error({ error }, "Background geocoding failed");
   });
 
   return site;

@@ -1,4 +1,5 @@
 import { prisma } from "../db/client.js";
+import { logger } from "../lib/logger.js";
 
 export async function createClient(data: {
   name: string;
@@ -22,7 +23,7 @@ export async function createClient(data: {
 
   if (existingClient) {
     // Keep the duplicate check without changing the API response shape.
-    console.warn("A client with this name already exists");
+    logger.warn("A client with this name already exists");
   }
 
   return client;

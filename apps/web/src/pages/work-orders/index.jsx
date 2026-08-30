@@ -258,7 +258,7 @@ export default function WorkOrders() {
 
       setPage(1);
       await loadWorkOrders(1);
-    } catch {
+    } catch (err) {
 
       setError(
         err.response?.data?.message ||

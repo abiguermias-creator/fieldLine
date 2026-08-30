@@ -28,7 +28,7 @@ export default function TechnicianDay() {
 
       const result = await getMyDay();
       setData(result);
-    } catch {
+    } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load your assignments.');
     } finally {
       setLoading(false);

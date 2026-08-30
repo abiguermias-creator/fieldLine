@@ -100,7 +100,7 @@ export default function ClientRequest() {
       setPriority('');
       setP1Confirmed(false);
       setDuplicateConfirmed(false);
-    } catch {
+    } catch (err) {
 
       const responseData = err.response?.data;
 
