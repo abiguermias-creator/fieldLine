@@ -60,32 +60,8 @@ async function loadSites() {
     const data = await getSites();
 
     const loadedSites = data.data || data || [];
-
-    console.log('SITES FROM API:', loadedSites);
-
-    loadedSites.forEach((site) => {
-      console.log(
-        site.name,
-        'isActive:',
-        site.isActive,
-        'latitude:',
-        site.latitude,
-        'longitude:',
-        site.longitude
-      );
-    });
- console.log(
-      'MANUAL PLACEMENT:',
-      loadedSites.map((site) => ({
-        name: site.name,
-        latitude: site.latitude,
-        longitude: site.longitude,
-        needsManualPlacement: site.needsManualPlacement
-      }))
-    );
-    setSites(loadedSites);
-  } catch (error) {
-    console.error('Failed to load sites:', error);
+setSites(loadedSites);
+  } catch {
 
     setMessage(
       error.response?.data?.message ||
@@ -98,8 +74,7 @@ async function loadSites() {
     try {
       const data = await getClients();
       setClients(data.data || data || []);
-    } catch (error) {
-      console.error('Failed to load clients:', error);
+    } catch {
     }
   }
 
@@ -149,8 +124,7 @@ async function handleCreateSite() {
 
     await loadSites();
     setPage(1);
-  } catch (error) {
-    console.error('Failed to create site:', error);
+  } catch {
 
     setMessage(
       error.response?.data?.message ||
@@ -236,8 +210,7 @@ async function handleUpdateSite() {
     });
 
     await loadSites();
-  } catch (error) {
-    console.error('Failed to update site:', error);
+  } catch {
 
     setMessage(
       error.response?.data?.message ||
@@ -261,8 +234,7 @@ async function handleUpdateSite() {
       setMessage('Site deleted successfully');
 
       await loadSites();
-    } catch (error) {
-      console.error('Failed to delete site:', error);
+    } catch {
 
       setMessage(
         error.response?.data?.message ||
@@ -286,8 +258,7 @@ async function handleUpdateSite() {
       setMessage('Site deactivated successfully');
 
       await loadSites();
-    } catch (error) {
-      console.error('Failed to deactivate site:', error);
+    } catch {
 
       setMessage(
         error.response?.data?.message ||
@@ -679,3 +650,7 @@ async function handleUpdateSite() {
     </>
   );
 }
+
+
+
+

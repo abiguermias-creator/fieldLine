@@ -106,3 +106,82 @@ export async function unassignWorkOrder(
 
   return response.data;
 }
+
+export async function moveWorkOrderStatus(id: string) {
+  const response = await api.patch(
+    `/work-orders/${id}/status-action`,
+  );
+
+  return response.data;
+}
+
+export async function markWorkOrderWaitingOnParts(
+  id: string,
+  description: string,
+) {
+  const response = await api.patch(
+    `/work-orders/${id}/waiting-on-parts`,
+    { description },
+  );
+
+  return response.data;
+}
+
+export type CreateWorkLogData = {
+  note: string;
+  minutesSpent: number;
+  partsUsed?: string;
+};
+
+export async function createWorkLog(
+  workOrderId: string,
+  data: CreateWorkLogData,
+) {
+  const response = await api.post(
+    `/work-orders/${workOrderId}/work-logs`,
+    data,
+  );
+
+  return response.data;
+}
+
+export async function getWorkLogs(
+  workOrderId: string,
+) {
+  const response = await api.get(
+    `/work-orders/${workOrderId}/work-logs`,
+  );
+
+  return response.data;
+}
+
+export async function getWorkOrderPhotos(
+  workOrderId: string,
+) {
+  const response = await api.get(
+    `/work-orders/${workOrderId}/photos`,
+  );
+
+  return response.data;
+}
+
+export async function uploadWorkOrderPhoto(
+  workOrderId: string,
+  file: File,
+) {
+  const formData = new FormData();
+
+  formData.append("photo", file);
+
+  const response = await api.post(
+    `/work-orders/${workOrderId}/photos`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return response.data;
+}

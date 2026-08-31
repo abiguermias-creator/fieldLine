@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { TRANSITIONS } from '@fieldline/shared';
 
 import {
   Alert,
+  Box,
   Button,
   Chip,
   Dialog,
@@ -26,14 +28,24 @@ import {
   updateWorkOrder,
   cancelWorkOrder,
   getAssignmentOptions,
-  unassignWorkOrder
+  unassignWorkOrder,
+  moveWorkOrderStatus,
+  markWorkOrderWaitingOnParts,
+  createWorkLog,
+  getWorkLogs,
+  getWorkOrderPhotos,
+ uploadWorkOrderPhoto,
 } from 'api/workOrder';
+const API_BASE_URL =
+import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || '';
 import { getSkills } from 'api/skills';
 import { useAuth } from 'contexts/AuthContext';
 
 const STATUS_LABELS = {
   NEW: 'New',
   ASSIGNED: 'Assigned',
+  EN_ROUTE: 'En route',
+  ON_SITE: 'On site',
   IN_PROGRESS: 'In progress',
   COMPLETED: 'Completed',
   CLOSED: 'Closed',
@@ -104,6 +116,22 @@ export default function WorkOrderDetail() {
   const [skills, setSkills] = useState([]);
   const [assignmentOptions, setAssignmentOptions] = useState(null);
 
+const [workLogs, setWorkLogs] = useState([]);
+const [loadingWorkLogs, setLoadingWorkLogs] = useState(true);
+const [workOrderPhotos, setWorkOrderPhotos] = useState([]);
+const [loadingPhotos, setLoadingPhotos] = useState(true);
+const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
+const [photoPreviewUrl, setPhotoPreviewUrl] = useState('');
+const [photoUploading, setPhotoUploading] = useState(false);
+const [photoError, setPhotoError] = useState('');
+const [photoSuccess, setPhotoSuccess] = useState('');
+const [workLogNote, setWorkLogNote] = useState('');
+const [workLogMinutes, setWorkLogMinutes] = useState('');
+const [workLogParts, setWorkLogParts] = useState('');
+const [workLogSaving, setWorkLogSaving] = useState(false);
+const [workLogError, setWorkLogError] = useState('');
+const [workLogSuccess, setWorkLogSuccess] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [loadingSkills, setLoadingSkills] = useState(true);
   const [loadingAssignmentOptions, setLoadingAssignmentOptions] =
@@ -113,6 +141,17 @@ export default function WorkOrderDetail() {
   const [error, setError] = useState('');
   const [saveError, setSaveError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [statusActionSaving, setStatusActionSaving] = useState(false);
+  const [statusActionError, setStatusActionError] = useState('');
+
+   const [waitingOnPartsDialogOpen, setWaitingOnPartsDialogOpen] =
+  useState(false);
+const [waitingOnPartsDescription, setWaitingOnPartsDescription] =
+  useState('');
+const [waitingOnPartsSaving, setWaitingOnPartsSaving] =
+  useState(false);
+const [waitingOnPartsError, setWaitingOnPartsError] =
+  useState('');
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -172,7 +211,6 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
 
       setWorkOrder(data);
     } catch (err) {
-      console.error(err);
 
       if (err.response?.status === 404) {
         setNotFound(true);
@@ -196,19 +234,9 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
       setLoadingAssignmentOptions(true);
 
       const data = await getAssignmentOptions(id);
-
-      console.log(
-        'ASSIGNMENT OPTIONS RESPONSE:',
-        data
-      );
-
-      setAssignmentOptions(data);
-    } catch (error) {
-      console.error(
-        'Failed to load assignment options:',
-        error
-      );
-      setAssignmentOptions(null);
+setAssignmentOptions(data);
+    } catch {
+setAssignmentOptions(null);
     } finally {
       setLoadingAssignmentOptions(false);
     }
@@ -222,6 +250,8 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
 
       await loadWorkOrder();
       await loadAssignmentOptions();
+      await loadWorkLogs();
+      await loadWorkOrderPhotos();
 
       try {
         setLoadingSkills(true);
@@ -233,8 +263,7 @@ const [equipmentAssignmentError, setEquipmentAssignmentError] =
             response ||
             []
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         setSkills([]);
       } finally {
         setLoadingSkills(false);
@@ -378,7 +407,6 @@ setEditScheduledEndAt(
 
       await loadWorkOrder();
         } catch (err) {
-      console.error(err);
 
       if (
         err.response?.status === 409 &&
@@ -412,6 +440,153 @@ setEditScheduledEndAt(
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function loadWorkLogs() {
+  try {
+    setLoadingWorkLogs(true);
+    setWorkLogError('');
+
+    const data = await getWorkLogs(id);
+
+    setWorkLogs(data?.logs || []);
+  } catch (err) {
+    setWorkLogError(
+      err?.response?.data?.message ||
+        'Failed to load work logs.'
+    );
+  } finally {
+    setLoadingWorkLogs(false);
+  }
+}
+
+  async function handleCreateWorkLog() {
+    if (!workOrder) {
+      return;
+    }
+
+    if (!workLogNote.trim()) {
+      setWorkLogError('Note is required.');
+      return;
+    }
+
+    const minutes = Number(workLogMinutes);
+
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+      setWorkLogError(
+        'Minutes spent must be a whole number greater than zero.'
+      );
+      return;
+    }
+
+    try {
+      setWorkLogSaving(true);
+      setWorkLogError('');
+      setWorkLogSuccess('');
+
+      await createWorkLog(workOrder.id, {
+        note: workLogNote.trim(),
+        minutesSpent: minutes,
+        partsUsed: workLogParts.trim() || undefined
+      });
+
+      setWorkLogNote('');
+      setWorkLogMinutes('');
+      setWorkLogParts('');
+
+      await loadWorkLogs();
+
+      setWorkLogSuccess('Work log added successfully.');
+    } catch (err) {
+
+      setWorkLogError(
+        err?.response?.data?.message ||
+          'Failed to add work log.'
+      );
+    } finally {
+      setWorkLogSaving(false);
+    }
+  }
+
+  async function loadWorkOrderPhotos() {
+  try {
+    setLoadingPhotos(true);
+    setPhotoError('');
+
+    const data = await getWorkOrderPhotos(id);
+
+    setWorkOrderPhotos(data || []);
+  } catch (err) {
+
+    setPhotoError(
+      err?.response?.data?.message ||
+        'Failed to load photos.'
+    );
+  } finally {
+    setLoadingPhotos(false);
+  }
+}
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setPhotoError('');
+    setPhotoSuccess('');
+
+    if (!file.type.startsWith('image/')) {
+      setSelectedPhotoFile(null);
+      setPhotoPreviewUrl('');
+      setPhotoError('Only image files are allowed.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSelectedPhotoFile(null);
+      setPhotoPreviewUrl('');
+      setPhotoError('Photo must be 10 MB or smaller.');
+      return;
+    }
+
+    setSelectedPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
+
+  async function handleUploadPhoto() {
+    if (!workOrder || !selectedPhotoFile) {
+      return;
+    }
+
+    try {
+      setPhotoUploading(true);
+      setPhotoError('');
+      setPhotoSuccess('');
+
+      await uploadWorkOrderPhoto(
+        workOrder.id,
+        selectedPhotoFile
+      );
+
+      setSelectedPhotoFile(null);
+      setPhotoPreviewUrl('');
+
+      setPhotoSuccess(
+        'Photo uploaded successfully.'
+      );
+
+      await loadWorkOrderPhotos();
+    } catch (err) {
+
+      setPhotoError(
+        err?.response?.data?.message ||
+          'Failed to upload photo. You can retry.'
+      );
+    } finally {
+      setPhotoUploading(false);
     }
   }
 
@@ -455,7 +630,6 @@ setEditScheduledEndAt(
 
       await loadWorkOrder();
     } catch (err) {
-      console.error(err);
 
       setSaveError(
         err.response?.data?.message ||
@@ -492,7 +666,6 @@ setEditScheduledEndAt(
 
     await loadAssignmentOptions();
   } catch (err) {
-    console.error(err);
 
     setAssignmentError(
       err.response?.data?.message ||
@@ -500,6 +673,71 @@ setEditScheduledEndAt(
     );
   } finally {
     setAssigningTechnician(false);
+  }
+}
+
+async function handleMoveWorkOrderStatus() {
+  if (!workOrder) {
+    return;
+  }
+
+  try {
+    setStatusActionSaving(true);
+    setStatusActionError('');
+    setSuccessMessage('');
+
+    const updated = await moveWorkOrderStatus(workOrder.id);
+
+    setWorkOrder(updated);
+    setSuccessMessage('Work order status updated successfully.');
+  } catch (err) {
+    setStatusActionError(
+      err.response?.data?.message ||
+        'Failed to update work order status.'
+    );
+  } finally {
+    setStatusActionSaving(false);
+  }
+}
+
+async function handleMarkWaitingOnParts() {
+  if (!workOrder) {
+    return;
+  }
+
+  if (!waitingOnPartsDescription.trim()) {
+    setWaitingOnPartsError(
+      'Description is required.'
+    );
+    return;
+  }
+
+  try {
+    setWaitingOnPartsSaving(true);
+    setWaitingOnPartsError('');
+    setSuccessMessage('');
+
+    const updated =
+      await markWorkOrderWaitingOnParts(
+        workOrder.id,
+        waitingOnPartsDescription.trim(),
+      );
+
+    setWorkOrder(updated);
+    setWaitingOnPartsDialogOpen(false);
+    setWaitingOnPartsDescription('');
+
+    setSuccessMessage(
+      'Work order marked as waiting on parts.'
+    );
+  } catch (err) {
+
+    setWaitingOnPartsError(
+      err.response?.data?.message ||
+        'Failed to mark work order as waiting on parts.'
+    );
+  } finally {
+    setWaitingOnPartsSaving(false);
   }
 }
 
@@ -535,7 +773,6 @@ async function handleUnassign() {
 
     await loadAssignmentOptions();
   } catch (err) {
-    console.error(err);
 
     setUnassignError(
       err.response?.data?.message ||
@@ -590,7 +827,6 @@ async function handleUnassign() {
 
     await loadAssignmentOptions();
   } catch (err) {
-    console.error(err);
 
     setEquipmentAssignmentError(
       err.response?.data?.message ||
@@ -644,7 +880,6 @@ async function handleUnassign() {
 
       await loadWorkOrder();
     } catch (err) {
-      console.error(err);
 
       if (err.response?.status === 409) {
         setCancelError(
@@ -728,6 +963,22 @@ async function handleUnassign() {
   const equipment =
     workOrder.equipment?.name ||
     'Unassigned';
+
+    const isAssignedTechnician =
+  user?.role === 'TECHNICIAN' &&
+  workOrder.technician?.user?.id === user?.id;
+const technicianNextStatus =
+  TRANSITIONS[workOrder.status]?.find((status) =>
+    ['EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED'].includes(status)
+  );
+
+const statusActionLabel =
+  {
+    EN_ROUTE: 'On my way',
+    ON_SITE: 'I have arrived',
+    IN_PROGRESS: 'Start work',
+    COMPLETED: 'Mark complete'
+  }[technicianNextStatus];
 
   const status =
     STATUS_LABELS[workOrder.status] ||
@@ -1031,13 +1282,57 @@ async function handleUnassign() {
                     'No description'}
                 </Typography>
 
-                <Typography>
-                  <strong>Status:</strong>{' '}
-                  <Chip
-                    label={status}
-                    size="small"
-                  />
-                </Typography>
+                <Stack
+  direction="row"
+  spacing={1}
+  alignItems="center"
+  flexWrap="wrap"
+>
+  <Typography>
+    <strong>Status:</strong>{' '}
+    <Chip
+      label={status}
+      size="small"
+    />
+  </Typography>
+
+ {isAssignedTechnician &&
+  statusActionLabel && (
+    <>
+      <Button
+        variant="contained"
+        size="small"
+        onClick={handleMoveWorkOrderStatus}
+        disabled={statusActionSaving || waitingOnPartsSaving}
+      >
+        {statusActionSaving
+          ? 'Updating...'
+          : statusActionLabel}
+      </Button>
+
+      {statusActionError && (
+  <Typography color="error">
+    {statusActionError}
+  </Typography>
+)}
+
+      {workOrder.status === 'IN_PROGRESS' && (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            setWaitingOnPartsError('');
+            setWaitingOnPartsDescription('');
+            setWaitingOnPartsDialogOpen(true);
+          }}
+          disabled={statusActionSaving || waitingOnPartsSaving}
+        >
+          Waiting on parts
+        </Button>
+      )}
+    </>
+  )}
+</Stack>
 
                 <Typography>
                   <strong>Priority:</strong>{' '}
@@ -1701,22 +1996,39 @@ async function handleUnassign() {
                 </Typography>
 
                 <Typography>
-                  <strong>Phone:</strong>{' '}
-                  {workOrder.client?.phone ||
-                    'Not provided'}
-                </Typography>
+  <strong>Address:</strong>{' '}
+  {workOrder.site?.address ? (
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        workOrder.site.address
+      )}`}
+      target="_blank"
+      rel="noreferrer"
+    >
+      {workOrder.site.address}
+    </a>
+  ) : (
+    'Not provided'
+  )}
+</Typography>
 
-                <Typography>
-                  <strong>Contact:</strong>{' '}
-                  {workOrder.client?.contactName ||
-                    'Not provided'}
-                </Typography>
+<Typography>
+  <strong>Contact:</strong>{' '}
+  {workOrder.client?.contactName ||
+    'Not provided'}
+</Typography>
 
-                <Typography>
-                  <strong>Address:</strong>{' '}
-                  {workOrder.client?.address ||
-                    'Not provided'}
-                </Typography>
+<Typography>
+  <strong>Phone:</strong>{' '}
+  {workOrder.client?.phone ? (
+    <a href={`tel:${workOrder.client.phone}`}>
+      {workOrder.client.phone}
+    </a>
+  ) : (
+    'Not provided'
+  )}
+</Typography>
+
               </Stack>
             </MainCard>
           </Grid>
@@ -1815,19 +2127,230 @@ async function handleUnassign() {
 
           <Grid item xs={12} md={6}>
             <MainCard title="Work Logs">
-              <Alert severity="info">
-                No work logs recorded yet.
-              </Alert>
-            </MainCard>
+  <Stack spacing={2}>
+    {user?.role === 'TECHNICIAN' &&
+      isAssignedTechnician && (
+        <>
+          <Typography variant="subtitle1">
+            Add work log
+          </Typography>
+
+          <TextField
+            label="Note"
+            value={workLogNote}
+            onChange={(event) =>
+              setWorkLogNote(event.target.value)
+            }
+            multiline
+            minRows={3}
+            fullWidth
+            disabled={workLogSaving}
+          />
+
+          <TextField
+            label="Minutes spent"
+            type="number"
+            value={workLogMinutes}
+            onChange={(event) =>
+              setWorkLogMinutes(event.target.value)
+            }
+            fullWidth
+            disabled={workLogSaving}
+            inputProps={{ min: 1, step: 1 }}
+          />
+
+          <TextField
+            label="Parts used"
+            value={workLogParts}
+            onChange={(event) =>
+              setWorkLogParts(event.target.value)
+            }
+            multiline
+            minRows={2}
+            fullWidth
+            disabled={workLogSaving}
+          />
+
+          {workLogSuccess && (
+            <Alert severity="success">
+              {workLogSuccess}
+            </Alert>
+          )}
+
+          <Button
+            variant="contained"
+            onClick={handleCreateWorkLog}
+            disabled={
+              workLogSaving ||
+              !workLogNote.trim() ||
+              !workLogMinutes
+            }
+          >
+            {workLogSaving
+              ? 'Adding...'
+              : 'Add Work Log'}
+          </Button>
+
+          <Divider />
+        </>
+      )}
+
+    {loadingWorkLogs ? (
+      <Typography>
+        Loading work logs...
+      </Typography>
+    ) : workLogError &&
+      workLogs.length === 0 ? (
+      <Alert severity="error">
+        {workLogError}
+      </Alert>
+    ) : workLogs.length === 0 ? (
+      <Alert severity="info">
+        No work logs recorded yet.
+      </Alert>
+    ) : (
+      <Stack spacing={2}>
+        {workLogs.map((log) => (
+          <Stack
+            key={log.id}
+            spacing={0.5}
+          >
+            <Typography>
+              <strong>
+                {log.technician?.user?.fullName ||
+                  log.technician?.employeeCode ||
+                  'Technician'}
+              </strong>
+            </Typography>
+
+            <Typography>
+              {log.note}
+            </Typography>
+
+            <Typography variant="body2">
+              {log.minutesSpent} minutes
+              {log.partsUsed
+                ? ` • Parts used: ${log.partsUsed}`
+                : ''}
+            </Typography>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+            >
+              {log.createdAt
+                ? new Date(
+                    log.createdAt
+                  ).toLocaleString()
+                : ''}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
+    )}
+  </Stack>
+</MainCard>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <MainCard title="Photos">
-              <Alert severity="info">
-                No photos attached yet.
-              </Alert>
-            </MainCard>
-          </Grid>
+  <MainCard title="Photos">
+    <Stack spacing={2}>
+      {user?.role === 'TECHNICIAN' && (
+        <>
+          <Button
+            variant="outlined"
+            component="label"
+            disabled={photoUploading}
+          >
+            Select Photo
+            <input
+              type="file"
+              hidden
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handlePhotoChange}
+            />
+          </Button>
+
+          {photoPreviewUrl && (
+            <Box>
+              <Typography variant="body2">
+                Selected photo:
+              </Typography>
+
+              <img
+                src={photoPreviewUrl}
+                alt="Selected preview"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: 240,
+                  objectFit: 'contain',
+                  borderRadius: 8
+                }}
+              />
+            </Box>
+          )}
+
+          {photoError && (
+            <Alert severity="error">
+              {photoError}
+            </Alert>
+          )}
+
+          {photoSuccess && (
+            <Alert severity="success">
+              {photoSuccess}
+            </Alert>
+          )}
+
+          {selectedPhotoFile && (
+            <Button
+              variant="contained"
+              onClick={handleUploadPhoto}
+              disabled={photoUploading}
+            >
+              {photoUploading
+                ? 'Uploading...'
+                : 'Upload Photo'}
+            </Button>
+          )}
+
+          <Divider />
+        </>
+      )}
+
+      {loadingPhotos ? (
+  <Typography>
+    Loading photos...
+  </Typography>
+) : workOrderPhotos.length === 0 ? (
+        <Alert severity="info">
+          No photos attached yet.
+        </Alert>
+      ) : (
+        <Stack
+          direction="row"
+          spacing={2}
+          flexWrap="wrap"
+        >
+          {workOrderPhotos.map((photo) => (
+            <Box key={photo.id}>
+              <img
+                src={`${API_BASE_URL}${photo.filePath}`}
+                alt={photo.fileName || 'Work order photo'}
+                style={{
+                  width: 140,
+                  height: 140,
+                  objectFit: 'cover',
+                  borderRadius: 8
+                }}
+              />
+            </Box>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  </MainCard>
+</Grid>
 
           <Grid item xs={12}>
             <MainCard title="Event Timeline">
@@ -2071,6 +2594,78 @@ async function handleUnassign() {
     </Button>
   </DialogActions>
 </Dialog>
+
+<Dialog
+  open={waitingOnPartsDialogOpen}
+  onClose={() => {
+    if (!waitingOnPartsSaving) {
+      setWaitingOnPartsDialogOpen(false);
+    }
+  }}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>
+    Waiting on parts
+  </DialogTitle>
+
+  <DialogContent>
+    <Stack spacing={2} sx={{ mt: 1 }}>
+      <Typography>
+        Please describe which parts are needed before
+        work can continue.
+      </Typography>
+
+      <TextField
+        label="Parts description"
+        value={waitingOnPartsDescription}
+        onChange={(event) => {
+          setWaitingOnPartsDescription(
+            event.target.value
+          );
+          setWaitingOnPartsError('');
+        }}
+        multiline
+        minRows={3}
+        fullWidth
+        required
+        error={Boolean(waitingOnPartsError)}
+        helperText={waitingOnPartsError}
+        disabled={waitingOnPartsSaving}
+      />
+    </Stack>
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      onClick={() => {
+        if (!waitingOnPartsSaving) {
+          setWaitingOnPartsDialogOpen(false);
+        }
+      }}
+      disabled={waitingOnPartsSaving}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleMarkWaitingOnParts}
+      disabled={
+        waitingOnPartsSaving ||
+        !waitingOnPartsDescription.trim()
+      }
+    >
+      {waitingOnPartsSaving
+        ? 'Saving...'
+        : 'Mark waiting on parts'}
+    </Button>
+  </DialogActions>
+</Dialog>
     </Stack>
   );
 }
+
+
+
+

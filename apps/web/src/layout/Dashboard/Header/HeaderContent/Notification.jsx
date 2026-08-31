@@ -55,8 +55,7 @@ useEffect(() => {
     try {
       const response = await api.get('/notifications');
       setNotifications(response.data);
-    } catch (error) {
-      console.error('Failed to load notifications', error);
+    } catch {
     }
   }
 
@@ -196,3 +195,4 @@ const unreadCount = notifications.length;
     </Box>
   );
 }
+

@@ -33,7 +33,6 @@ export default function Equipment() {
 
       setEquipment(data || []);
     } catch (error) {
-      console.error('Failed to load equipment:', error);
 
       setMessage(error.response?.data?.message || error.message || 'Failed to load equipment');
     }
@@ -89,7 +88,6 @@ export default function Equipment() {
 
       await loadEquipment();
     } catch (error) {
-      console.error('Equipment save failed:', error);
 
       setMessage(error.response?.data?.message || error.message || 'Failed to save equipment');
     }
@@ -120,7 +118,6 @@ export default function Equipment() {
 
       await loadEquipment();
     } catch (error) {
-      console.error('Failed to delete equipment:', error);
 
       setMessage(error.response?.data?.message || error.message || 'Failed to delete equipment');
     }
@@ -134,7 +131,6 @@ export default function Equipment() {
 
       await loadEquipment();
     } catch (error) {
-      console.error('Failed to deactivate equipment:', error);
 
       setMessage(error.response?.data?.message || error.message || 'Failed to deactivate equipment');
     }
@@ -148,7 +144,6 @@ export default function Equipment() {
 
       await loadEquipment();
     } catch (error) {
-      console.error('Failed to activate equipment:', error);
 
       setMessage(error.response?.data?.message || error.message || 'Failed to activate equipment');
     }

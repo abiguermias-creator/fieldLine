@@ -25,8 +25,7 @@ export default function DashboardDefault() {
       try {
         const data = await getWorkOrders();
         setWorkOrders(data.items || []);
-      } catch (error) {
-        console.error('Failed to load work orders:', error);
+      } catch {
       }
     }
 
@@ -146,3 +145,4 @@ export default function DashboardDefault() {
     </Grid>
   );
 }
+

@@ -1,4 +1,5 @@
 import { prisma } from "../db/client.js";
+import { logger } from "../lib/logger.js";
 
 type GeocodeResult = {
   latitude: number;
@@ -25,7 +26,10 @@ export async function geocodeAddress(
     : null;
 
   if (cached && cached.latitude !== null && cached.longitude !== null) {
-    console.log(`Using cached geocode for ${normalizedAddress}, ${normalizedCity ?? ""}`);
+    logger.info(
+  { address: normalizedAddress, city: normalizedCity },
+  "Using cached geocode",
+);
 
     return {
       latitude: cached.latitude,
@@ -79,11 +83,14 @@ export async function geocodeAddress(
       },
     });
 
-    console.log(`Geocoded and cached: ${normalizedAddress}, ${normalizedCity ?? ""}`);
+    logger.info(
+  { address: normalizedAddress, city: normalizedCity },
+  "Geocoded and cached",
+);
 
     return result;
   } catch (error) {
-    console.error("Geocoding failed:", error);
+    logger.error({ error }, "Geocoding failed");
 
     return null;
   }
@@ -102,7 +109,7 @@ export async function geocodeSite(siteId: string) {
 
   // Never overwrite manually placed coordinates
   if (site.coordinatesManual) {
-    console.log(`Skipping geocode because site ${site.id} has manual coordinates`);
+    logger.info({ siteId: site.id }, "Skipping geocode because site has manual coordinates");
 
     return;
   }
@@ -110,7 +117,7 @@ export async function geocodeSite(siteId: string) {
   const result = await geocodeAddress(site.address, site.city ?? undefined);
 
   if (!result) {
-    console.log(`Could not geocode site ${site.id}`);
+    logger.warn({ siteId: site.id }, "Could not geocode site");
 
     await prisma.site.update({
       where: {
@@ -135,5 +142,5 @@ export async function geocodeSite(siteId: string) {
     },
   });
 
-  console.log(`Geocoded site ${site.id}`);
+  logger.info({ siteId: site.id }, "Geocoded site");
 }

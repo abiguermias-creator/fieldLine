@@ -10,8 +10,7 @@ export function useLocalStorage(key, defaultValue) {
     try {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
-    } catch (err) {
-      console.warn(`Error reading localStorage key “${key}”:`, err);
+    } catch {
       return defaultValue;
     }
   };
@@ -22,8 +21,7 @@ export function useLocalStorage(key, defaultValue) {
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state));
-    } catch (err) {
-      console.warn(`Error setting localStorage key “${key}”:`, err);
+    } catch {
     }
   }, [key, state]);
 
@@ -43,3 +41,5 @@ export function useLocalStorage(key, defaultValue) {
 
   return { state, setState, setField, resetState };
 }
+
+

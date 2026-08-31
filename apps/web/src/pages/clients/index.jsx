@@ -39,8 +39,7 @@ export default function Clients() {
 
       setClients(data.data || []);
       setPagination(data.pagination);
-    } catch (error) {
-      console.error('Failed to load clients:', error);
+    } catch {
     }
   }
 
@@ -67,8 +66,7 @@ export default function Clients() {
       });
 
       loadClients();
-    } catch (error) {
-      console.error(error);
+    } catch {
       setMessage('Failed to create client');
     }
   }
@@ -80,7 +78,7 @@ export default function Clients() {
       setMessage('Client deleted successfully');
 
       loadClients();
-    } catch (error) {
+    } catch {
       setMessage(error.response?.data?.message || error.message);
     }
   }
@@ -92,7 +90,7 @@ export default function Clients() {
       setMessage('Client deactivated successfully');
 
       loadClients();
-    } catch (error) {
+    } catch {
       setMessage(error.response?.data?.message || error.message);
     }
   }
@@ -223,3 +221,4 @@ export default function Clients() {
     </MainCard>
   );
 }
+

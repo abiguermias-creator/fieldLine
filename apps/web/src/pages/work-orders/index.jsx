@@ -137,8 +137,7 @@ export default function WorkOrders() {
           pages: 0
         }
       );
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Failed to load work orders.');
     } finally {
       setLoadingList(false);
@@ -175,8 +174,7 @@ export default function WorkOrders() {
             techniciansResponse ||
             []
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         setError(
           'Failed to load clients, sites, or technicians.'
         );
@@ -261,7 +259,6 @@ export default function WorkOrders() {
       setPage(1);
       await loadWorkOrders(1);
     } catch (err) {
-      console.error(err);
 
       setError(
         err.response?.data?.message ||
@@ -859,9 +856,19 @@ export default function WorkOrders() {
                           {workOrder.priority}
                         </TableCell>
 
-                        <TableCell>
-                          {workOrder.status}
-                        </TableCell>
+                        <TableCell
+  sx={
+    workOrder.status === 'AWAITING_PARTS'
+      ? {
+          fontWeight: 700,
+          backgroundColor: 'warning.light',
+          color: 'warning.contrastText'
+        }
+      : undefined
+  }
+>
+  {workOrder.status}
+</TableCell>
 
                         <TableCell>
                           {getTechnicianName(
@@ -939,3 +946,4 @@ export default function WorkOrders() {
     </Stack>
   );
 }
+
