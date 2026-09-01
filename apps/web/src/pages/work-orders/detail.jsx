@@ -34,12 +34,13 @@ import {
   createWorkLog,
   getWorkLogs,
   getWorkOrderPhotos,
- uploadWorkOrderPhoto,
+  uploadWorkOrderPhoto,
 } from 'api/workOrder';
-const API_BASE_URL =
-import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || '';
 import { getSkills } from 'api/skills';
 import { useAuth } from 'contexts/AuthContext';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || '';
 
 const STATUS_LABELS = {
   NEW: 'New',
@@ -569,8 +570,12 @@ scheduledEndAt:
       return;
     }
 
-    setSelectedPhotoFile(file);
-    setPhotoPreviewUrl(URL.createObjectURL(file));
+    if (photoPreviewUrl) {
+  URL.revokeObjectURL(photoPreviewUrl);
+}
+
+setSelectedPhotoFile(file);
+setPhotoPreviewUrl(URL.createObjectURL(file));
   }
 
   async function handleUploadPhoto() {
@@ -589,11 +594,16 @@ scheduledEndAt:
       );
 
       setSelectedPhotoFile(null);
-      setPhotoPreviewUrl('');
 
-      setPhotoSuccess(
-        'Photo uploaded successfully.'
-      );
+if (photoPreviewUrl) {
+  URL.revokeObjectURL(photoPreviewUrl);
+}
+
+setPhotoPreviewUrl('');
+
+setPhotoSuccess(
+  'Photo uploaded successfully.'
+);
 
       await loadWorkOrderPhotos();
     } catch (err) {
@@ -1378,11 +1388,7 @@ const statusActionLabel =
         setStatusActionError('');
         setSuccessMessage('');
 
-        const action =
-  workOrder.status === 'ON_HOLD' ||
-  workOrder.status === 'AWAITING_PARTS'
-    ? 'resume'
-    : 'advance';
+        const action = 'hold';
 
 const updated =
   await moveWorkOrderStatus(
@@ -1396,7 +1402,6 @@ const updated =
           'Work order put on hold.'
         );
       } catch (err) {
-        console.error(err);
 
         setStatusActionError(
           err.response?.data?.message ||

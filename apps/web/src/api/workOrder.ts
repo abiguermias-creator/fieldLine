@@ -178,14 +178,9 @@ export async function uploadWorkOrderPhoto(
   formData.append("photo", file);
 
   const response = await api.post(
-    `/work-orders/${workOrderId}/photos`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-  );
+  `/work-orders/${workOrderId}/photos`,
+  formData,
+);
 
   return response.data;
 }

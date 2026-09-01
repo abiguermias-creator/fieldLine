@@ -2976,14 +2976,15 @@ if (
     await prisma.$transaction(
       async (tx) => {
         const data: {
-  status:
-    | "EN_ROUTE"
-    | "ON_SITE"
-    | "IN_PROGRESS"
-    | "ON_HOLD"
-    | "COMPLETED"
-    | "VERIFIED"
-    | "CLOSED";
+ status:
+  | "EN_ROUTE"
+  | "ON_SITE"
+  | "IN_PROGRESS"
+  | "AWAITING_PARTS"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "VERIFIED"
+  | "CLOSED";
   arrivedAt?: Date;
 } = {
   status: nextStatus,
@@ -3315,6 +3316,7 @@ export async function getWorkOrderPhotos(
 
 export async function createWorkOrderPhoto(
   workOrderId: string,
+  userId: string,
   file: {
     buffer: Buffer;
     originalname: string;
@@ -3329,11 +3331,40 @@ export async function createWorkOrderPhoto(
       },
       select: {
         id: true,
+        technicianId: true,
       },
     });
 
   if (!workOrder) {
     throw new Error("Work order not found");
+  }
+
+  if (!workOrder.technicianId) {
+    throw new Error(
+      "Work order is not assigned to a technician",
+    );
+  }
+
+  const technician =
+    await prisma.technicianProfile.findUnique({
+      where: {
+        id: workOrder.technicianId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  if (!technician) {
+    throw new Error(
+      "Assigned technician not found",
+    );
+  }
+
+  if (technician.userId !== userId) {
+    throw new Error(
+      "Only the assigned technician can upload photos",
+    );
   }
 
   const uploadDirectory = path.resolve(

@@ -504,6 +504,13 @@ export async function moveWorkOrderStatusController(
         });
       }
 
+      if (error.message === "WORK_LOG_REQUIRED") {
+  return res.status(409).json({
+    message:
+      "At least one work log is required before completing this work order.",
+  });
+}
+
       return res.status(409).json({
         message: error.message,
       });
@@ -727,10 +734,16 @@ export async function getWorkOrderPhotosController(
 }
 
 export async function createWorkOrderPhotoController(
-  req: Request,
+  req: AuthRequest,
   res: Response,
 ) {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
     const file = req.file;
 
     if (!file) {
@@ -741,6 +754,7 @@ export async function createWorkOrderPhotoController(
 
     const photo = await createWorkOrderPhoto(
       req.params.id as string,
+      req.user.userId,
       {
         buffer: file.buffer,
         originalname: file.originalname,
@@ -752,10 +766,7 @@ export async function createWorkOrderPhotoController(
     res.status(201).json(photo);
   } catch (error) {
     if (error instanceof Error) {
-      if (
-        error.message ===
-        "Work order not found"
-      ) {
+      if (error.message === "Work order not found") {
         return res.status(404).json({
           message: error.message,
         });
