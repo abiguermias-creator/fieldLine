@@ -30,6 +30,7 @@ import {
   unassignWorkOrderSchema,
   createWorkLogSchema,
   waitingOnPartsSchema,
+  moveWorkOrderStatusSchema,
 } from "./work-order.schemas.js";
 
 export async function createWorkOrderController(req: Request, res: Response) {
@@ -465,12 +466,13 @@ export async function moveWorkOrderStatusController(
       });
     }
 
-    const workOrder =
-  await moveWorkOrderStatus(
-    req.params.id as string,
-    req.user.userId,
-    req.body?.action,
-  );
+      const data = moveWorkOrderStatusSchema.parse(req.body);
+
+    const workOrder = await moveWorkOrderStatus(
+      req.params.id as string,
+      req.user.userId,
+      data.action,
+    );
 
     res.json(workOrder);
   } catch (error) {

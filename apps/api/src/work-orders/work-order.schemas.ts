@@ -166,3 +166,7 @@ export const waitingOnPartsSchema = z.object({
     .min(1, "Description of needed parts is required")
     .max(1000, "Description must not exceed 1000 characters"),
 });
+
+export const moveWorkOrderStatusSchema = z.object({
+  action: z.enum(["hold", "resume"]),
+});

@@ -32,29 +32,6 @@ type WorkOrderStatus =
   | "CLOSED"
   | "CANCELLED";
 
-const allowedStatusTransitions: Record<
-  WorkOrderStatus,
-  WorkOrderStatus[]
-> = {
-  NEW: ["TRIAGED"],
-  TRIAGED: ["SCHEDULED"],
-  SCHEDULED: ["ASSIGNED"],
-  ASSIGNED: ["SCHEDULED", "EN_ROUTE"],
-  EN_ROUTE: ["ON_SITE"],
-  ON_SITE: ["IN_PROGRESS"],
-  IN_PROGRESS: [
-    "ON_HOLD",
-    "AWAITING_PARTS",
-    "COMPLETED",
-  ],
-  ON_HOLD: ["IN_PROGRESS"],
-  AWAITING_PARTS: ["IN_PROGRESS"],
-  COMPLETED: ["VERIFIED"],
-  VERIFIED: ["CLOSED"],
-  CLOSED: [],
-  CANCELLED: [],
-};
-
 function calculateSlaTargets(
   priority: WorkOrderPriority,
   createdAt: Date,
@@ -948,9 +925,7 @@ const nextStatus =
   nextStatus !== existingWorkOrder.status
 ) {
   const allowedNextStatuses =
-    allowedStatusTransitions[
-      existingWorkOrder.status
-    ];
+  TRANSITIONS[existingWorkOrder.status];
 
   if (!allowedNextStatuses.includes(nextStatus)) {
     throw new Error(
