@@ -21,6 +21,7 @@ import {
 } from "./work-order.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/role.js";
+import { DomainError } from "../lib/errors.js";
 
 const router = Router();
 
@@ -51,28 +52,39 @@ router.get("/:id/work-logs",requireAuth,getWorkLogsController,);
 router.get("/:id/photos",requireAuth,getWorkOrderPhotosController,);
 
 router.post("/:id/photos",requireAuth,requireRole("TECHNICIAN"),
-  (req, res, next) => {
+    (req, res, next) => {
     workOrderPhotoUpload.single("photo")(
       req,
       res,
       (error) => {
         if (error instanceof multer.MulterError) {
           if (error.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({
-              message:
+            return next(
+              new DomainError(
+                "VALIDATION_FAILED",
                 "Photo must be 10 MB or smaller",
-            });
+                422,
+              ),
+            );
           }
 
-          return res.status(400).json({
-            message: error.message,
-          });
+          return next(
+            new DomainError(
+              "VALIDATION_FAILED",
+              error.message,
+              422,
+            ),
+          );
         }
 
         if (error instanceof Error) {
-          return res.status(400).json({
-            message: error.message,
-          });
+          return next(
+            new DomainError(
+              "VALIDATION_FAILED",
+              error.message,
+              422,
+            ),
+          );
         }
 
         next();
@@ -85,8 +97,6 @@ router.post("/:id/photos",requireAuth,requireRole("TECHNICIAN"),
 router.get("/:id", requireAuth, getWorkOrderController);
 
 router.patch("/:id/unassign", requireAuth, dispatcherOnly, unassignWorkOrderController);
-
-router.patch("/:id", requireAuth, updateWorkOrderController);
 
 router.patch("/:id", requireAuth, updateWorkOrderController);
 

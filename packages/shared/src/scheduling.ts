@@ -6,7 +6,11 @@ export type ErrorCode =
   | "SKILL_NOT_HELD"
   | "SKILL_EXPIRED"
   | "INSUFFICIENT_TRAVEL_TIME"
-  | "DAILY_HOURS_EXCEEDED";
+  | "DAILY_HOURS_EXCEEDED"
+  | "INVALID_TRANSITION"
+  | "WORK_ORDER_CLOSED"
+  | "VALIDATION_FAILED"
+  | "INTERNAL_ERROR";
 
 export interface RuleViolation {
   code: ErrorCode;

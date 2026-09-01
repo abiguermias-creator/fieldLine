@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { z } from "zod";
-import { logger } from "./logger.js";
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -19,10 +18,9 @@ const EnvSchema = z.object({
 const parsed = EnvSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  logger.error(
-  { errors: parsed.error.flatten().fieldErrors },
-  "Invalid environment",
-);
+  process.stderr.write(
+    `Invalid environment ${JSON.stringify(parsed.error.flatten().fieldErrors)}\n`,
+  );
   process.exit(1);
 }
 
