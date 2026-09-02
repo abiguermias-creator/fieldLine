@@ -39,4 +39,7 @@ jobs:
         run: npm run typecheck
 
       - name: Test
+        env:
+          DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+          JWT_SECRET: "ci-test-secret-that-is-at-least-32-characters-long"
         run: npm run test

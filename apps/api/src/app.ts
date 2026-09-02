@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
-import { ulid } from "ulid";
+import { requestIdMiddleware } from "./middleware/requestId.js";
 import testRoutes from "./test/test.routes.js";
 import protectedRoutes from "./auth/protected.routes.js";
 import workOrderRoutes from "./work-orders/work-order.routes.js";
@@ -20,11 +20,14 @@ import notificationRoutes from "./notifications/notification.routes.js";
 import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
 import { prisma } from "./db/client.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
   const app = express();
 
-    app.use(
+  app.use(requestIdMiddleware);
+
+  app.use(
     "/uploads",
     express.static(
       path.resolve(process.cwd(), "uploads"),
@@ -45,11 +48,13 @@ export function createApp() {
   app.use(
     (pinoHttp as any)({
       logger,
-      genReqId: () => ulid(),
     }),
   );
 
-  const healthHandler = async (_req: express.Request, res: express.Response) => {
+  const healthHandler = async (
+    _req: express.Request,
+    res: express.Response,
+  ) => {
     let database = "ok";
 
     try {
@@ -66,10 +71,8 @@ export function createApp() {
     });
   };
 
-  
   app.get("/api/health", healthHandler);
 
-  
   app.get("/health", healthHandler);
   app.use("/api/auth", authRoutes);
   app.use("/api/test", testRoutes);
@@ -82,5 +85,8 @@ export function createApp() {
   app.use("/api/equipment", equipmentRoutes);
   app.use("/api/notifications", notificationRoutes);
   app.use("/api", protectedRoutes);
+
+  app.use(errorHandler);
+
   return app;
 }

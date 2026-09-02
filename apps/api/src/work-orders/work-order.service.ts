@@ -7,8 +7,13 @@ import { logger } from "../lib/logger.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-
 import { TRANSITIONS } from "@fieldline/shared";
+
+import {
+  InvalidTransitionError,
+  WorkOrderClosedError,
+  TechnicianUnavailableError,
+} from "../lib/errors.js";
 
 type WorkOrderPriority = "P1" | "P2" | "P3" | "P4";
 
@@ -808,9 +813,9 @@ export async function updateWorkOrder(
     existingWorkOrder.status === "CLOSED" ||
     existingWorkOrder.status === "CANCELLED"
   ) {
-    throw new Error(
-      "Closed or cancelled work orders cannot be edited",
-    );
+    throw new WorkOrderClosedError(
+  "Closed or cancelled work orders cannot be edited",
+);
   }
 
   const schedulingRequested =
@@ -1442,7 +1447,7 @@ if (blockingViolation) {
     oldValue:
       existingWorkOrder.technicianId,
     newValue:
-      assignedTechnicianName,
+      data.technicianId,
   });
 }
 
@@ -2849,10 +2854,13 @@ const nextStatus =
       ),
   );
   if (!nextStatus) {
-    throw new Error(
-      `Work order cannot move forward from ${workOrder.status}`,
-    );
-  }
+  throw new InvalidTransitionError(
+    `Work order cannot move forward from ${workOrder.status}`,
+    {
+      from: workOrder.status,
+    },
+  );
+}
 
   const updated =
     await prisma.$transaction(
