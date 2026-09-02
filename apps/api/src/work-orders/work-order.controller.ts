@@ -132,18 +132,6 @@ if (
 }
 
 if (
-  error.message.startsWith("INVALID_TRANSITION:")
-) {
-  const [code, ...messageParts] =
-    error.message.split(": ");
-
-  return res.status(409).json({
-    code,
-    message: messageParts.join(": "),
-  });
-}
-
-if (
   error.message.startsWith("TECHNICIAN_UNAVAILABLE:")
 ) {
   const [code, ...messageParts] =

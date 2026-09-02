@@ -168,5 +168,5 @@ export const waitingOnPartsSchema = z.object({
 });
 
 export const moveWorkOrderStatusSchema = z.object({
-  action: z.enum(["hold", "resume"]),
+  action: z.enum(["hold", "resume", "complete"]).optional(),
 });

@@ -920,23 +920,24 @@ const nextStatus =
         ? "ASSIGNED"
         : undefined;
 
-  if (
-  nextStatus !== undefined &&
-  nextStatus !== existingWorkOrder.status
-) {
-  const allowedNextStatuses =
-  TRANSITIONS[existingWorkOrder.status];
+    if (
+    nextStatus !== undefined &&
+    nextStatus !== existingWorkOrder.status
+  ) {
+    const allowedNextStatuses =
+      TRANSITIONS[existingWorkOrder.status];
 
-  if (!allowedNextStatuses.includes(nextStatus)) {
-    throw new Error(
-      `INVALID_TRANSITION: ${existingWorkOrder.status} -> ${nextStatus}. Allowed next statuses: ${
-        allowedNextStatuses.length > 0
-          ? allowedNextStatuses.join(", ")
-          : "none"
-      }`,
-    );
+    if (!allowedNextStatuses.includes(nextStatus)) {
+      throw new InvalidTransitionError(
+        `Work order cannot move from ${existingWorkOrder.status} to ${nextStatus}`,
+        {
+          from: existingWorkOrder.status,
+          to: nextStatus,
+          allowed: allowedNextStatuses,
+        },
+      );
+    }
   }
-}
 
   let assignedTechnicianName: string | null = null;
   let assignedTechnicianUserId: string | null = null;
