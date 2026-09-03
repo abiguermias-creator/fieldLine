@@ -80,7 +80,7 @@ central `resilientFetch` client in:
 
 The client applies a default 3-second timeout, configurable per integration,
 and retries transient network failures and 5xx responses using exponential
-backoff with jitter. 4xx responses are not retried.
+backoff with jitter. 4xx responses are not retried except HTTP 429 rate-limit responses, which are retried and honor Retry-After when present.
 
 The integration-specific timeouts are:
 
@@ -109,8 +109,7 @@ central resilient HTTP client prevents each integration from implementing
 different timeout and retry behavior.
 
 Timeouts prevent external requests from hanging application operations.
-Retries improve reliability for transient failures, while avoiding retries for
-4xx responses prevents repeated invalid requests.
+Retries improve reliability for transient failures, while 4xx responses generally indicate invalid client requests and are not retried. HTTP 429 is treated as a temporary rate-limit condition and retried according to Retry-After when available.
 
 The OSRM fallback ensures that scheduling can still estimate travel time when
 live routing is unavailable. Weather remains non-blocking because it is an

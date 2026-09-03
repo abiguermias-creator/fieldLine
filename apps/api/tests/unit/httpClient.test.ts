@@ -87,30 +87,116 @@ describe("resilientFetch", () => {
   });
 
   it("aborts a request that exceeds the timeout", async () => {
-  const fetchMock = vi
-    .spyOn(globalThis, "fetch")
-    .mockImplementation((_url, options) => {
-      return new Promise((_resolve, reject) => {
-        const signal = options?.signal;
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = options?.signal;
 
-        signal?.addEventListener("abort", () => {
-          reject(
-            new DOMException("The operation was aborted", "AbortError"),
-          );
+          signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException(
+                "The operation was aborted",
+                "AbortError",
+              ),
+            );
+          });
         });
       });
-    });
 
-  await expect(
-    resilientFetch("https://example.com", {
-      timeoutMs: 10,
-      maxRetries: 0,
-    }),
-  ).rejects.toThrow("Request timed out after 10ms");
+    await expect(
+      resilientFetch("https://example.com", {
+        timeoutMs: 10,
+        maxRetries: 0,
+      }),
+    ).rejects.toThrow("Request timed out after 10ms");
 
-  expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-  const [, requestOptions] = fetchMock.mock.calls[0];
-  expect(requestOptions?.signal?.aborted).toBe(true);
-});
+    const [, requestOptions] = fetchMock.mock.calls[0];
+    expect(requestOptions?.signal?.aborted).toBe(true);
+  });
+
+  it("times out when the response body is too slow", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((_url, options) => {
+        const signal = options?.signal;
+
+        const body = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              new TextEncoder().encode("{"),
+            );
+
+            const timer = setTimeout(() => {
+              controller.enqueue(
+                new TextEncoder().encode('"ok":true}'),
+              );
+              controller.close();
+            }, 1500);
+
+            signal?.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timer);
+                controller.error(
+                  new DOMException(
+                    "The operation was aborted",
+                    "AbortError",
+                  ),
+                );
+              },
+              { once: true },
+            );
+          },
+        });
+
+        return Promise.resolve(
+          new Response(body, {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+        );
+      });
+
+    await expect(
+      resilientFetch("https://example.com", {
+        timeoutMs: 100,
+        maxRetries: 0,
+      }),
+    ).rejects.toThrow("Request timed out after 100ms");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a 429 response and succeeds", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 429,
+          headers: { "Retry-After": "0" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    const result = await resilientFetch<{ ok: boolean }>(
+      "https://example.com",
+      {
+        timeoutMs: 1000,
+        maxRetries: 1,
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
