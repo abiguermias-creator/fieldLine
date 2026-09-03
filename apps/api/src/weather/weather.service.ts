@@ -1,4 +1,5 @@
 import { logger } from "../lib/logger.js";
+import { getOpenMeteoForecast } from "../integrations/openMeteo.js";
 
 type WeatherForecast = {
   available: true;
@@ -39,37 +40,20 @@ export async function getWeatherForecast(
     const start = scheduledAt.toISOString().slice(0, 10);
     const end = scheduledEndAt.toISOString().slice(0, 10);
 
-    const url =
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${encodeURIComponent(latitude)}` +
-      `&longitude=${encodeURIComponent(longitude)}` +
-      `&hourly=precipitation_probability,precipitation,windspeed_10m` +
-      `&start_date=${start}` +
-      `&end_date=${end}` +
-      `&timezone=auto`;
+    const hourly = await getOpenMeteoForecast(
+      latitude,
+      longitude,
+      start,
+      end,
+    );
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as {
-      hourly?: {
-        time?: string[];
-        precipitation_probability?: number[];
-        precipitation?: number[];
-        windspeed_10m?: number[];
-      };
-    };
-
-    const times = data.hourly?.time ?? [];
+    const times = hourly.time ?? [];
     const rainProbabilities =
-      data.hourly?.precipitation_probability ?? [];
+      hourly.precipitation_probability ?? [];
     const precipitation =
-      data.hourly?.precipitation ?? [];
+      hourly.precipitation ?? [];
     const windSpeeds =
-      data.hourly?.windspeed_10m ?? [];
+      hourly.wind_speed_10m ?? [];
 
     const windowStart = scheduledAt.getTime();
     const windowEnd = scheduledEndAt.getTime();
@@ -150,7 +134,11 @@ export async function getWeatherForecast(
           : null,
     };
   } catch (error) {
-    logger.error({ error }, "Weather forecast unavailable");
+    logger.error(
+      { error },
+      "Weather forecast unavailable",
+    );
+
 
     return null;
   }
