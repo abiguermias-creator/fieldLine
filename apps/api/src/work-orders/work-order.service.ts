@@ -22,8 +22,13 @@ type WorkOrderStatus =
   | "TRIAGED"
   | "ASSIGNED"
   | "SCHEDULED"
+  | "EN_ROUTE"
+  | "ON_SITE"
   | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "AWAITING_PARTS"
   | "COMPLETED"
+  | "VERIFIED"
   | "CLOSED"
   | "CANCELLED";
 
@@ -737,7 +742,7 @@ export async function getWorkOrderById(
 
       events: {
   orderBy: {
-    createdAt: "asc",
+    createdAt: "desc",
   },
   include: {
     actor: {
@@ -905,15 +910,34 @@ if (statusForScheduling !== "TRIAGED") {
   data.technicianId !== existingWorkOrder.technicianId;
 
 const nextStatus =
-  schedulingRequested &&
-  nextScheduledAt &&
-  nextScheduledEndAt
-    ? "SCHEDULED"
-    : data.status !== undefined
-      ? data.status
+  data.status !== undefined
+    ? data.status
+    : schedulingRequested &&
+        nextScheduledAt &&
+        nextScheduledEndAt
+      ? "SCHEDULED"
       : assigningTechnician
         ? "ASSIGNED"
         : undefined;
+
+    if (
+    nextStatus !== undefined &&
+    nextStatus !== existingWorkOrder.status
+  ) {
+    const allowedNextStatuses =
+      TRANSITIONS[existingWorkOrder.status];
+
+    if (!allowedNextStatuses.includes(nextStatus)) {
+      throw new InvalidTransitionError(
+        `Work order cannot move from ${existingWorkOrder.status} to ${nextStatus}`,
+        {
+          from: existingWorkOrder.status,
+          to: nextStatus,
+          allowed: allowedNextStatuses,
+        },
+      );
+    }
+  }
 
   let assignedTechnicianName: string | null = null;
   let assignedTechnicianUserId: string | null = null;
@@ -2789,15 +2813,17 @@ export async function unassignWorkOrder(
 export async function moveWorkOrderStatus(
   id: string,
   actorId: string,
+  action?: "advance" | "hold" | "resume" | "complete"
 ) {
   const workOrder =
     await prisma.workOrder.findUnique({
       where: { id },
       select: {
-        id: true,
-        status: true,
-        technicianId: true,
-      },
+  id: true,
+  status: true,
+  technicianId: true,
+  slaRespondBy: true,
+},
     });
 
   if (!workOrder) {
@@ -2834,51 +2860,141 @@ export async function moveWorkOrderStatus(
     );
   }
 
-  const allowedTechnicianStatuses = [
-  "EN_ROUTE",
-  "ON_SITE",
-  "IN_PROGRESS",
-  "COMPLETED",
-] as const;
+  let nextStatus:
+  | "EN_ROUTE"
+  | "ON_SITE"
+  | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | undefined;
 
-type TechnicianNextStatus =
-  (typeof allowedTechnicianStatuses)[number];
+if (
+  workOrder.status === "IN_PROGRESS" &&
+  action === "hold"
+) {
+  if (!TRANSITIONS.IN_PROGRESS.includes("ON_HOLD")) {
+    throw new InvalidTransitionError(
+      `Work order cannot move forward from ${workOrder.status}`,
+      {
+        from: workOrder.status,
+        to: "ON_HOLD",
+      },
+    );
+  }
 
-const nextStatus =
-  TRANSITIONS[
-    workOrder.status as keyof typeof TRANSITIONS
-  ].find(
-    (status): status is TechnicianNextStatus =>
-      allowedTechnicianStatuses.includes(
-        status as TechnicianNextStatus,
-      ),
-  );
-  if (!nextStatus) {
-  throw new InvalidTransitionError(
-    `Work order cannot move forward from ${workOrder.status}`,
-    {
-      from: workOrder.status,
-    },
-  );
+  nextStatus = "ON_HOLD";
+} else if (
+  (workOrder.status === "ON_HOLD" ||
+    workOrder.status === "AWAITING_PARTS") &&
+  action === "resume"
+) {
+  const resumeStatus =
+    TRANSITIONS[workOrder.status].find(
+      (status) => status === "IN_PROGRESS",
+    );
+
+  if (!resumeStatus) {
+    throw new InvalidTransitionError(
+      `Work order cannot move forward from ${workOrder.status}`,
+      {
+        from: workOrder.status,
+      },
+    );
+  }
+
+  nextStatus = "IN_PROGRESS";
+} else {
+  const nextStatusFromTransition =
+    TRANSITIONS[
+      workOrder.status as keyof typeof TRANSITIONS
+    ].find(
+      (status) =>
+        status === "EN_ROUTE" ||
+        status === "ON_SITE" ||
+        status === "IN_PROGRESS" ||
+        status === "COMPLETED",
+    );
+
+  if (!nextStatusFromTransition) {
+    throw new InvalidTransitionError(
+      `Work order cannot move forward from ${workOrder.status}`,
+      {
+        from: workOrder.status,
+      },
+    );
+  }
+
+  nextStatus = nextStatusFromTransition;
 }
+
+  if (
+    workOrder.status === "IN_PROGRESS" &&
+    nextStatus === "COMPLETED"
+  ) {
+    const workLog = await prisma.workLog.findFirst({
+      where: {
+        workOrderId: id,
+        minutesSpent: {
+          gt: 0,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!workLog) {
+      throw new Error("WORK_LOG_REQUIRED");
+    }
+  }
 
   const updated =
     await prisma.$transaction(
       async (tx) => {
         const data: {
-          status:
-            | "EN_ROUTE"
-            | "ON_SITE"
-            | "IN_PROGRESS"
-            | "COMPLETED";
-          arrivedAt?: Date;
-        } = {
-          status: nextStatus,
-        };
+ status:
+  | "EN_ROUTE"
+  | "ON_SITE"
+  | "IN_PROGRESS"
+  | "AWAITING_PARTS"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "VERIFIED"
+  | "CLOSED";
+  arrivedAt?: Date;
+} = {
+  status: nextStatus,
+};
 
         if (nextStatus === "ON_SITE") {
-          data.arrivedAt = new Date();
-        }
+  const arrivedAt = new Date();
+  data.arrivedAt = arrivedAt;
+
+  if (
+    workOrder.slaRespondBy &&
+    arrivedAt <= workOrder.slaRespondBy
+  ) {
+    await tx.workOrderEvent.create({
+      data: {
+        workOrderId: id,
+        actorId,
+        eventType: "RESPONSE_SLA_MET",
+        newValue: arrivedAt.toISOString(),
+        createdAt: arrivedAt,
+      },
+    });
+  } else if (workOrder.slaRespondBy) {
+    await tx.workOrderEvent.create({
+      data: {
+        workOrderId: id,
+        actorId,
+        eventType: "RESPONSE_SLA_BREACHED",
+        newValue: arrivedAt.toISOString(),
+        createdAt: arrivedAt,
+      },
+    });
+  }
+}
 
         const result =
           await tx.workOrder.update({
@@ -2892,12 +3008,9 @@ const nextStatus =
           data: {
             workOrderId: id,
             actorId,
-            eventType:
-              "STATUS_CHANGED",
-            oldValue:
-              workOrder.status,
-            newValue:
-              nextStatus,
+            eventType: "STATUS_CHANGED",
+            oldValue: workOrder.status,
+            newValue: nextStatus,
           },
         });
 
@@ -2906,8 +3019,7 @@ const nextStatus =
     );
 
   return updated;
-}
-
+  }
 export async function markWorkOrderWaitingOnParts(
   id: string,
   actorId: string,
@@ -3180,6 +3292,7 @@ export async function getWorkOrderPhotos(
 
 export async function createWorkOrderPhoto(
   workOrderId: string,
+  userId: string,
   file: {
     buffer: Buffer;
     originalname: string;
@@ -3194,11 +3307,40 @@ export async function createWorkOrderPhoto(
       },
       select: {
         id: true,
+        technicianId: true,
       },
     });
 
   if (!workOrder) {
     throw new Error("Work order not found");
+  }
+
+  if (!workOrder.technicianId) {
+    throw new Error(
+      "Work order is not assigned to a technician",
+    );
+  }
+
+  const technician =
+    await prisma.technicianProfile.findUnique({
+      where: {
+        id: workOrder.technicianId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  if (!technician) {
+    throw new Error(
+      "Assigned technician not found",
+    );
+  }
+
+  if (technician.userId !== userId) {
+    throw new Error(
+      "Only the assigned technician can upload photos",
+    );
   }
 
   const uploadDirectory = path.resolve(
