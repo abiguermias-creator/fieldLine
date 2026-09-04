@@ -1,5 +1,7 @@
 import { prisma } from "../db/client.js";
 import { logger } from "../lib/logger.js";
+import { config } from "../lib/config.js";
+import { resilientFetch } from "../integrations/httpClient.js";
 
 type GeocodeResult = {
   latitude: number;
@@ -13,7 +15,7 @@ export async function geocodeAddress(
   const normalizedAddress = address.trim();
   const normalizedCity = city?.trim() || null;
 
-  // Check cache first
+
   const cached = normalizedCity
     ? await prisma.geocodeCache.findUnique({
         where: {
@@ -40,23 +42,21 @@ export async function geocodeAddress(
   const query = normalizedCity ? `${normalizedAddress}, ${normalizedCity}` : normalizedAddress;
 
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          "User-Agent": "FieldLine-App/1.0",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as Array<{
-      lat: string;
-      lon: string;
-    }>;
+    const data = await resilientFetch<
+  Array<{
+    lat: string;
+    lon: string;
+  }>
+>(
+  `${config.NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}`,
+  {
+    timeoutMs: 3000,
+    maxRetries: 1,
+    headers: {
+      "User-Agent": config.NOMINATIM_USER_AGENT,
+    },
+  },
+);
 
     if (!data.length) {
       return null;
@@ -73,7 +73,7 @@ export async function geocodeAddress(
       longitude: Number(firstResult.lon),
     };
 
-    // Save successful result in cache
+
     await prisma.geocodeCache.create({
       data: {
         address: normalizedAddress,
@@ -107,7 +107,7 @@ export async function geocodeSite(siteId: string) {
     return;
   }
 
-  // Never overwrite manually placed coordinates
+
   if (site.coordinatesManual) {
     logger.info({ siteId: site.id }, "Skipping geocode because site has manual coordinates");
 

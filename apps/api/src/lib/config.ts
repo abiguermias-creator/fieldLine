@@ -13,6 +13,21 @@ const EnvSchema = z.object({
     .default("http://localhost:5173")
     .transform((s) => s.split(",").map((o) => o.trim())),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  NOMINATIM_USER_AGENT: z
+    .string()
+    .default("FieldLine-App/1.0"),
+  NOMINATIM_BASE_URL: z
+    .string()
+    .url()
+    .default("https://nominatim.openstreetmap.org"),
+  OSRM_BASE_URL: z
+    .string()
+    .url()
+    .default("https://router.project-osrm.org"),
+  OPEN_METEO_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.open-meteo.com"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

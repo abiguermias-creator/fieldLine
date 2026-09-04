@@ -3,6 +3,7 @@ import { geocodeAddress } from "../geocode/geocode.service.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { getWeatherForecast } from "../weather/weather.service.js";
 import { checkAssignment } from "../services/scheduling.js";
+import { getTravelTime } from "../integrations/osrm.js";
 import { logger } from "../lib/logger.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -183,35 +184,6 @@ async function findPossibleDuplicate(
   return bestMatch;
 }
 
-function calculateDistanceKm(
-  latitude1: number,
-  longitude1: number,
-  latitude2: number,
-  longitude2: number,
-) {
-  const earthRadiusKm = 6371;
-
-  const lat1 = (latitude1 * Math.PI) / 180;
-  const lat2 = (latitude2 * Math.PI) / 180;
-
-  const deltaLat =
-    ((latitude2 - latitude1) * Math.PI) / 180;
-
-  const deltaLon =
-    ((longitude2 - longitude1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(deltaLon / 2) ** 2;
-
-  const c =
-    2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return earthRadiusKm * c;
-}
-
 async function getRoutingTravelTime(
   fromLatitude: number,
   fromLongitude: number,
@@ -235,83 +207,47 @@ async function getRoutingTravelTime(
       return {
         minutes: cachedRoute.travelMinutes,
         distanceKm: cachedRoute.distanceKm,
+        source: "routing" as const,
       };
     }
 
-    const url =
-      `https://router.project-osrm.org/route/v1/driving/` +
-      `${fromLongitude},${fromLatitude};` +
-      `${toLongitude},${toLatitude}` +
-      `?overview=false`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as {
-      code?: string;
-      routes?: Array<{
-        duration?: number;
-        distance?: number;
-      }>;
-    };
-
-    const route = data.routes?.[0];
-
-    if (
-      data.code !== "Ok" ||
-      !route ||
-      typeof route.duration !== "number"
-    ) {
-      return null;
-    }
-
-    const minutes = Math.max(
-      0,
-      Math.round(route.duration / 60),
+    const travelResult = await getTravelTime(
+      fromLatitude,
+      fromLongitude,
+      toLatitude,
+      toLongitude,
     );
 
-    const distanceKm =
-      typeof route.distance === "number"
-        ? Math.round(
-            (route.distance / 1000) * 10,
-          ) / 10
-        : null;
-
-    await prisma.routingCache.upsert({
-      where: {
-        fromLatitude_fromLongitude_toLatitude_toLongitude: {
+    if (travelResult.source === "routing") {
+      await prisma.routingCache.upsert({
+        where: {
+          fromLatitude_fromLongitude_toLatitude_toLongitude: {
+            fromLatitude,
+            fromLongitude,
+            toLatitude,
+            toLongitude,
+          },
+        },
+        update: {
+          travelMinutes: travelResult.minutes,
+          distanceKm: travelResult.distanceKm,
+          source: "routing",
+        },
+        create: {
           fromLatitude,
           fromLongitude,
           toLatitude,
           toLongitude,
+          travelMinutes: travelResult.minutes,
+          distanceKm: travelResult.distanceKm,
+          source: "routing",
         },
-      },
-      update: {
-        travelMinutes: minutes,
-        distanceKm,
-        source: "routing",
-      },
-      create: {
-        fromLatitude,
-        fromLongitude,
-        toLatitude,
-        toLongitude,
-        travelMinutes: minutes,
-        distanceKm,
-        source: "routing",
-      },
-    });
+      });
+    }
 
-    return {
-      minutes,
-      distanceKm,
-    };
+    return travelResult;
   } catch (error) {
     logger.error({ error }, "Routing failed");
-
     return null;
   }
 }
@@ -351,43 +287,18 @@ async function calculateTravelEstimate(
       siteLongitude,
     );
 
-  if (routingResult) {
-    return {
-      estimatedTravelMinutes:
-        routingResult.minutes,
-      travelDistanceKm:
-        routingResult.distanceKm,
-      travelSource: "routing" as const,
-    };
-  }
-
-  const straightLineDistanceKm =
-    calculateDistanceKm(
-      baseCoordinates.latitude,
-      baseCoordinates.longitude,
-      siteLatitude,
-      siteLongitude,
-    );
-
-  const averageDrivingSpeedKmh = 30;
-
-  const fallbackMinutes = Math.max(
-    1,
-    Math.round(
-      (straightLineDistanceKm /
-        averageDrivingSpeedKmh) *
-        60,
-    ),
-  );
-
+ if (routingResult) {
   return {
-    estimatedTravelMinutes: fallbackMinutes,
-    travelDistanceKm:
-      Math.round(
-        straightLineDistanceKm * 10,
-      ) / 10,
-    travelSource: "straight-line-fallback" as const,
+    estimatedTravelMinutes: routingResult.minutes,
+    travelDistanceKm: routingResult.distanceKm,
+    travelSource: routingResult.source,
   };
+ }
+ return {
+  estimatedTravelMinutes: null,
+  travelDistanceKm: null,
+  travelSource: "unavailable" as const,
+};
 }
 
 export async function createWorkOrder(data: {
@@ -1248,29 +1159,12 @@ const nextStatus =
             currentSite.longitude,
           );
 
-          if (routingResult) {
-            travelEstimate = {
-              minutes: routingResult.minutes,
-              source: "routing",
-            };
-          } else {
-            const distanceKm = calculateDistanceKm(
-              previousAssignment.site.latitude,
-              previousAssignment.site.longitude,
-              currentSite.latitude,
-              currentSite.longitude,
-            );
-
-            const estimatedMinutes = Math.max(
-              1,
-              Math.round((distanceKm / 40) * 60),
-            );
-
-            travelEstimate = {
-              minutes: estimatedMinutes,
-              source: "straight-line",
-            };
-          }
+        if (routingResult) {
+  travelEstimate = {
+    minutes: routingResult.minutes,
+    source: routingResult.source,
+  };
+}
         }
 
 
