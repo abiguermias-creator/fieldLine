@@ -1,4 +1,5 @@
 import { prisma } from "../db/client.js";
+import { Prisma } from "@prisma/client";
 import { geocodeAddress } from "../geocode/geocode.service.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { getWeatherForecast } from "../weather/weather.service.js";
@@ -9,6 +10,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { TRANSITIONS } from "@fieldline/shared";
+
 
 import {
   InvalidTransitionError,
@@ -1604,10 +1606,23 @@ if (blockingViolation) {
         schedulingWarning,
       };
     },
-    {
+        {
       timeout: 10000,
     },
-  );
+  ).catch((error: unknown) => {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2004" &&
+      error.meta?.constraint ===
+        "work_orders_no_technician_double_booking"
+    ) {
+      throw new TechnicianUnavailableError(
+        "Technician is already assigned during the requested time window.",
+      );
+    }
+
+    throw error;
+  });
 
   if (
     assigningTechnician &&

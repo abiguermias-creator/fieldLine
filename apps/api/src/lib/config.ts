@@ -13,6 +13,11 @@ const EnvSchema = z.object({
     .default("http://localhost:5173")
     .transform((s) => s.split(",").map((o) => o.trim())),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  REDIS_URL: z
+  .string()
+  .url()
+  .optional()
+  .or(z.literal("").transform(() => undefined)),
   NOMINATIM_USER_AGENT: z
     .string()
     .default("FieldLine-App/1.0"),
