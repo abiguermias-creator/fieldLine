@@ -118,3 +118,53 @@ orders.
 
 External HTTP calls are mocked in unit tests so retry, timeout, and fallback
 behavior can be verified without depending on real internet services.
+
+## Architecture Decision: Caching, Rate Limiting, and Concurrency Control
+
+### Decision
+
+Redis is used for shared caching and distributed rate-limiting state when
+`REDIS_URL` is configured. The application falls back to in-memory rate
+limiting when Redis is unavailable.
+
+Geocoding results are cached in Redis for 7 days, while successful OSRM
+routing results are cached for 24 hours. Cache failures are non-blocking:
+the application logs the failure and continues to the source service.
+
+The API uses sliding-window rate limiting with `rate-limiter-flexible`:
+
+- Login: 5 requests per 15 minutes per client IP
+- Technician location pings: 4 requests per 60 seconds per authenticated user
+
+Rate-limited responses return HTTP 429 with `Retry-After` and
+`X-RateLimit-*` headers.
+
+PostgreSQL exclusion constraints provide database-level protection against
+overlapping active technician or equipment assignments. This closes the
+check-then-act race where two concurrent requests could otherwise pass the
+application-level availability check before either assignment is written.
+
+### Verification
+
+The Stage 4 location-ping simulator sent 20 concurrent requests. Four
+requests passed the rate limiter and reached the technician endpoint, while
+16 requests were rejected with HTTP 429. No request-level network errors
+occurred.
+
+The first four requests returned HTTP 403 because the simulator uses the
+seeded dispatcher account, which is authenticated but does not have the
+TECHNICIAN role required by the endpoint. This still verifies that requests
+reach the endpoint after passing the rate limiter and that subsequent
+requests are rejected by the sliding-window limiter.
+
+### Reason
+
+Redis reduces latency and avoids unnecessary calls to external services,
+while providing shared state for rate limiting across API instances.
+
+Rate limiting protects authentication and high-frequency location endpoints
+from abuse and runaway traffic.
+
+Database exclusion constraints enforce scheduling invariants at the database
+level, protecting against concurrency races that application-level
+check-then-act logic cannot guarantee.

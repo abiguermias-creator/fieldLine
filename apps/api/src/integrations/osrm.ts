@@ -1,5 +1,6 @@
 import { config } from "../lib/config.js";
 import { logger } from "../lib/logger.js";
+import { getOrSetCache } from "../lib/cache.js";
 import { resilientFetch } from "./httpClient.js";
 
 interface OsrmResponse {

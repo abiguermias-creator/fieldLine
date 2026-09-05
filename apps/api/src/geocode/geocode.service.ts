@@ -2,6 +2,7 @@ import { prisma } from "../db/client.js";
 import { logger } from "../lib/logger.js";
 import { config } from "../lib/config.js";
 import { resilientFetch } from "../integrations/httpClient.js";
+import { getOrSetCache } from "../lib/cache.js";
 
 type GeocodeResult = {
   latitude: number;
@@ -14,6 +15,9 @@ export async function geocodeAddress(
 ): Promise<GeocodeResult | null> {
   const normalizedAddress = address.trim();
   const normalizedCity = city?.trim() || null;
+  const cacheKey = `geocode:${normalizedCity ?? ""}:${normalizedAddress}`;
+
+return getOrSetCache(cacheKey, 7 * 24 * 60 * 60, async () => {
 
 
   const cached = normalizedCity
@@ -94,8 +98,8 @@ export async function geocodeAddress(
 
     return null;
   }
+});
 }
-
 export async function geocodeSite(siteId: string) {
   const site = await prisma.site.findUnique({
     where: {

@@ -14,6 +14,7 @@ import {
 
 import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/role.js";
+import { locationPingRateLimiter } from "../middleware/rateLimiter.js";
 
 const router = Router();
 
@@ -25,7 +26,12 @@ router.get("/", requireRole("DISPATCHER", "SUPERVISOR"), getTechniciansControlle
 
 router.get("/me/day", requireRole("TECHNICIAN"), getMyDayController);
 
-router.post("/me/location", requireRole("TECHNICIAN"), updateTechnicianLocationController);
+router.post(
+  "/me/location",
+  locationPingRateLimiter,
+  requireRole("TECHNICIAN"),
+  updateTechnicianLocationController,
+);
 
 router.patch("/me/location-sharing", requireRole("TECHNICIAN"), updateMyLocationSharingController);
 
