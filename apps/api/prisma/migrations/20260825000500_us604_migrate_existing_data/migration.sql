@@ -1,6 +1,3 @@
--- US-604: Migrate existing work-order data
-
--- Create a system actor for synthetic historical events.
 INSERT INTO "users" (
   "id",
   "email",
@@ -14,17 +11,16 @@ INSERT INTO "users" (
 VALUES (
   '00000000-0000-0000-0000-000000000604',
   'system-us604@fieldline.local',
-  'SYSTEM',
-  'System Migration',
-  'DISPATCHER',
-  true,
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
+  '$argon2id$v=19$m=65536,t=3,p=4$Txe+3OWa6V4IiNxYCE0A8Q$FZlRNLbcNLhLB3ZX0cpG8EJBzosFIVMW3y3/p2jdzcg',
+'System Migration',
+'DISPATCHER',
+false,
+CURRENT_TIMESTAMP,
+CURRENT_TIMESTAMP
 )
 ON CONFLICT ("id") DO NOTHING;
 
--- Create a synthetic creation event for every work order
--- that currently has no event history.
+
 INSERT INTO "work_order_events" (
   "id",
   "work_order_id",
@@ -48,10 +44,3 @@ WHERE NOT EXISTS (
   FROM "work_order_events" e
   WHERE e."work_order_id" = wo."id"
 );
-
--- US-604 rollback:
--- DELETE FROM "work_order_events"
--- WHERE "actor_id" = '00000000-0000-0000-0000-000000000604';
---
--- DELETE FROM "users"
--- WHERE "id" = '00000000-0000-0000-0000-000000000604';
