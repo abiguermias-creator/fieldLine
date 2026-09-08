@@ -1,5 +1,5 @@
-import path from "node:path";
 import cookieParser from "cookie-parser";
+import path from "node:path";
 import authRoutes from "./auth/auth.routes.js";
 import express from "express";
 import cors from "cors";
@@ -25,7 +25,8 @@ import { errorHandler } from "./middleware/errorHandler.js";
 export function createApp() {
   const app = express();
 
-  app.use(requestIdMiddleware);
+
+    app.use(requestIdMiddleware);
 
   app.use(
     "/uploads",
@@ -33,6 +34,7 @@ export function createApp() {
       path.resolve(process.cwd(), "uploads"),
     ),
   );
+
 
   app.use(helmet());
   app.use(express.json({ limit: "1mb" }));

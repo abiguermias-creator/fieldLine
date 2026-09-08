@@ -34,12 +34,13 @@ import {
   createWorkLog,
   getWorkLogs,
   getWorkOrderPhotos,
- uploadWorkOrderPhoto,
+  uploadWorkOrderPhoto,
 } from 'api/workOrder';
-const API_BASE_URL =
-import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || '';
 import { getSkills } from 'api/skills';
 import { useAuth } from 'contexts/AuthContext';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || '';
 
 const STATUS_LABELS = {
   NEW: 'New',
@@ -67,19 +68,33 @@ function formatDate(value) {
   return new Date(value).toLocaleString();
 }
 
-function getSlaStatus(value, completed) {
+function getSlaStatus(
+  value,
+  completed,
+  responseMet = false
+) {
   if (!value) {
     return 'Not applicable';
   }
 
-  if (completed) {
-    return 'Completed';
+  if (responseMet) {
+    return 'Met';
   }
 
-  const target = new Date(value).getTime();
+  if (completed) {
+    return 'Met';
+  }
 
-  if (target < Date.now()) {
-    return 'Overdue';
+  const minutesRemaining =
+    (new Date(value).getTime() - Date.now()) /
+    60000;
+
+  if (minutesRemaining <= 0) {
+    return 'Breached';
+  }
+
+  if (minutesRemaining < 30) {
+    return 'At risk';
   }
 
   return 'On track';
@@ -389,12 +404,15 @@ setEditScheduledEndAt(
     priority: editPriority,
     skillIds: editSkillIds,
     estimatedDuration,
-    scheduledAt: editScheduledAt
-      ? new Date(editScheduledAt).toISOString()
-      : null,
-    scheduledEndAt: editScheduledEndAt
-      ? new Date(editScheduledEndAt).toISOString()
-      : null
+    scheduledAt:
+  editStatus === 'TRIAGED' && editScheduledAt
+    ? new Date(editScheduledAt).toISOString()
+    : undefined,
+
+scheduledEndAt:
+  editStatus === 'TRIAGED' && editScheduledEndAt
+    ? new Date(editScheduledEndAt).toISOString()
+    : undefined
   }
 );
 
@@ -552,8 +570,12 @@ setEditScheduledEndAt(
       return;
     }
 
-    setSelectedPhotoFile(file);
-    setPhotoPreviewUrl(URL.createObjectURL(file));
+    if (photoPreviewUrl) {
+  URL.revokeObjectURL(photoPreviewUrl);
+}
+
+setSelectedPhotoFile(file);
+setPhotoPreviewUrl(URL.createObjectURL(file));
   }
 
   async function handleUploadPhoto() {
@@ -572,11 +594,16 @@ setEditScheduledEndAt(
       );
 
       setSelectedPhotoFile(null);
-      setPhotoPreviewUrl('');
 
-      setPhotoSuccess(
-        'Photo uploaded successfully.'
-      );
+if (photoPreviewUrl) {
+  URL.revokeObjectURL(photoPreviewUrl);
+}
+
+setPhotoPreviewUrl('');
+
+setPhotoSuccess(
+  'Photo uploaded successfully.'
+);
 
       await loadWorkOrderPhotos();
     } catch (err) {
@@ -686,11 +713,25 @@ async function handleMoveWorkOrderStatus() {
     setStatusActionError('');
     setSuccessMessage('');
 
-    const updated = await moveWorkOrderStatus(workOrder.id);
+    const action =
+  workOrder.status === 'ON_HOLD'
+    ? 'resume'
+    : workOrder.status === 'IN_PROGRESS'
+      ? 'complete'
+      : undefined;
 
-    setWorkOrder(updated);
-    setSuccessMessage('Work order status updated successfully.');
-  } catch (err) {
+            const updated = await moveWorkOrderStatus(
+        workOrder.id,
+        action
+      );
+
+      setWorkOrder(updated);
+
+      setSuccessMessage(
+        'Work order status updated successfully.'
+      );
+    } catch (err) {
+
     setStatusActionError(
       err.response?.data?.message ||
         'Failed to update work order status.'
@@ -967,10 +1008,11 @@ async function handleUnassign() {
     const isAssignedTechnician =
   user?.role === 'TECHNICIAN' &&
   workOrder.technician?.user?.id === user?.id;
-const technicianNextStatus =
-  TRANSITIONS[workOrder.status]?.find((status) =>
-    ['EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED'].includes(status)
-  );
+
+    const technicianNextStatus =
+    TRANSITIONS[workOrder.status]?.find((status) =>
+      ['EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED'].includes(status)
+    );
 
 const statusActionLabel =
   {
@@ -1057,6 +1099,12 @@ const statusActionLabel =
           {successMessage}
         </Alert>
       )}
+
+      {statusActionError && (
+  <Alert severity="error">
+    {statusActionError}
+  </Alert>
+)}
 
       {saveError && (
         <Alert severity="error">
@@ -1330,6 +1378,47 @@ const statusActionLabel =
           Waiting on parts
         </Button>
       )}
+      {workOrder.status === 'IN_PROGRESS' && (
+  <Button
+    variant="outlined"
+    size="small"
+    onClick={async () => {
+      try {
+        setStatusActionSaving(true);
+        setStatusActionError('');
+        setSuccessMessage('');
+
+        const action = 'hold';
+
+const updated =
+  await moveWorkOrderStatus(
+    workOrder.id,
+    action
+  );
+
+        setWorkOrder(updated);
+
+        setSuccessMessage(
+          'Work order put on hold.'
+        );
+      } catch (err) {
+
+        setStatusActionError(
+          err.response?.data?.message ||
+            'Failed to put work order on hold.'
+        );
+      } finally {
+        setStatusActionSaving(false);
+      }
+    }}
+    disabled={
+      statusActionSaving ||
+      waitingOnPartsSaving
+    }
+  >
+    On hold
+  </Button>
+)}
     </>
   )}
 </Stack>
@@ -2089,10 +2178,15 @@ const statusActionLabel =
 
                   <Chip
                     label={getSlaStatus(
-                      workOrder.slaRespondBy,
-                      workOrder.status ===
-                        'COMPLETED'
-                    )}
+  workOrder.slaRespondBy,
+  false,
+  Boolean(
+  workOrder.events?.some(
+    (event) =>
+      event.eventType === 'RESPONSE_SLA_MET'
+  )
+)
+)}
                     size="small"
                   />
                 </Stack>

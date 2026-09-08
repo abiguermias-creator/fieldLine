@@ -107,9 +107,13 @@ export async function unassignWorkOrder(
   return response.data;
 }
 
-export async function moveWorkOrderStatus(id: string) {
+export async function moveWorkOrderStatus(
+  id: string,
+  action?: 'advance' | 'hold' | 'resume' | 'complete',
+) {
   const response = await api.patch(
     `/work-orders/${id}/status-action`,
+    { action },
   );
 
   return response.data;
@@ -174,14 +178,9 @@ export async function uploadWorkOrderPhoto(
   formData.append("photo", file);
 
   const response = await api.post(
-    `/work-orders/${workOrderId}/photos`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-  );
+  `/work-orders/${workOrderId}/photos`,
+  formData,
+);
 
   return response.data;
 }

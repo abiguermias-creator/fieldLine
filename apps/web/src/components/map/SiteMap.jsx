@@ -1,25 +1,31 @@
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 function MapCenter({ sites }) {
   const map = useMap();
 
-  if (sites.length === 0) {
-    return null;
-  }
+  useEffect(() => {
+    if (sites.length === 0) {
+      return;
+    }
 
-  const firstSite = sites[0];
+    const firstSite = sites[0];
 
-  if (
-    firstSite.latitude === null ||
-    firstSite.latitude === undefined ||
-    firstSite.longitude === null ||
-    firstSite.longitude === undefined
-  ) {
-    return null;
-  }
+    if (
+      firstSite.latitude === null ||
+      firstSite.latitude === undefined ||
+      firstSite.longitude === null ||
+      firstSite.longitude === undefined
+    ) {
+      return;
+    }
 
-  map.setView([Number(firstSite.latitude), Number(firstSite.longitude)], 13);
+    map.setView(
+      [Number(firstSite.latitude), Number(firstSite.longitude)],
+      13
+    );
+  }, [map, sites]);
 
   return null;
 }

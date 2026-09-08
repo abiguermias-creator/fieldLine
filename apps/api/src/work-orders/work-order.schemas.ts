@@ -25,7 +25,21 @@ export const updateWorkOrderSchema = z.object({
 
   isOutdoor: z.boolean().optional(),
 
-  status: z.enum(["NEW","TRIAGED","ASSIGNED","SCHEDULED","IN_PROGRESS","COMPLETED","CLOSED","CANCELLED",]).optional(),
+  status: z.enum([
+    "NEW",
+    "TRIAGED",
+    "SCHEDULED",
+    "ASSIGNED",
+    "EN_ROUTE",
+    "ON_SITE",
+    "IN_PROGRESS",
+    "ON_HOLD",
+    "AWAITING_PARTS",
+    "COMPLETED",
+    "VERIFIED",
+    "CLOSED",
+    "CANCELLED",
+  ]).optional(),
 
   priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
 
@@ -151,4 +165,8 @@ export const waitingOnPartsSchema = z.object({
     .trim()
     .min(1, "Description of needed parts is required")
     .max(1000, "Description must not exceed 1000 characters"),
+});
+
+export const moveWorkOrderStatusSchema = z.object({
+  action: z.enum(["hold", "resume", "complete"]).optional(),
 });
