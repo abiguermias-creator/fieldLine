@@ -2758,27 +2758,21 @@ export async function moveWorkOrderStatus(
   action?: "advance" | "hold" | "resume" | "complete"
 ) {
   const workOrder =
-    await prisma.workOrder.findUnique({
-      where: { id },
-      select: {
-  id: true,
-<<<<<<< HEAD
-  reference: true,
-  status: true,
-  technicianId: true,
-  client: {
+  await prisma.workOrder.findUnique({
+    where: { id },
     select: {
-      email: true,
+      id: true,
+      reference: true,
+      status: true,
+      technicianId: true,
+      slaRespondBy: true,
+      client: {
+        select: {
+          email: true,
+        },
+      },
     },
-  },
-=======
-  status: true,
-  technicianId: true,
-  slaRespondBy: true,
->>>>>>> origin/main
-},
-    });
-
+  });
   if (!workOrder) {
     throw new Error("Work order not found");
   }
