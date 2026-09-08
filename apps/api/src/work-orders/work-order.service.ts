@@ -10,6 +10,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { TRANSITIONS } from "@fieldline/shared";
+import { emailQueue } from "../jobs/email.queue.js";
 
 
 import {
@@ -313,9 +314,14 @@ export async function createWorkOrder(data: {
       id: data.siteId,
     },
     select: {
-      id: true,
-      clientId: true,
+    id: true,
+    clientId: true,
+    client: {
+    select: {
+      email: true,
     },
+  },
+},
   });
 
   if (!site) {
@@ -374,7 +380,7 @@ export async function createWorkOrder(data: {
     agreedDate,
   );
 
-  return prisma.$transaction(async (tx) => {
+    const workOrder = await prisma.$transaction(async (tx) => {
     const year = createdAt.getFullYear();
 
     const sequenceRow =
@@ -414,8 +420,17 @@ export async function createWorkOrder(data: {
         slaRespondBy,
         slaResolveBy,
       },
-    });
+        });
   });
+
+  await emailQueue.add("work-order-created", {
+    idempotencyKey: `work-order-created:${workOrder.id}`,
+    to: site.client.email,
+    subject: `Work order ${workOrder.reference} created`,
+    text: `Your work order ${workOrder.reference} has been created successfully.`,
+  });
+
+  return workOrder;
 }
 
 export async function getWorkOrders(query: {
@@ -828,8 +843,9 @@ const nextStatus =
         ? "ASSIGNED"
         : undefined;
 
-  let assignedTechnicianName: string | null = null;
-  let assignedTechnicianUserId: string | null = null;
+let assignedTechnicianName: string | null = null;
+let assignedTechnicianUserId: string | null = null;
+let assignedTechnicianEmail: string | null = null;
 
   if (
     data.technicianId !== undefined && 
@@ -846,6 +862,7 @@ const nextStatus =
     select: {
       id: true,
       fullName: true,
+      email: true,
       role: true,
       isActive: true,
     },
@@ -857,10 +874,9 @@ const nextStatus =
     throw new Error("Technician not found");
   }
 
-  assignedTechnicianName = 
-  technician.user.fullName;
-  assignedTechnicianUserId = 
-  technician.user.id;
+  assignedTechnicianName = technician.user.fullName;
+  assignedTechnicianUserId = technician.user.id;
+  assignedTechnicianEmail = technician.user.email;
 
   if (technician.user.role !== "TECHNICIAN") {
     throw new Error("Selected user is not a technician");
@@ -1601,17 +1617,26 @@ if (blockingViolation) {
   });
 
   if (
-    assigningTechnician &&
-    assignedTechnicianUserId &&
-    assignedTechnicianName
-  ) {
-    await createNotification({
-      userId: assignedTechnicianUserId,
-      type: "TECHNICIAN_ASSIGNED",
-      title: "Work order assigned",
-      message: `You have been assigned work order ${result.reference}.`,
+  assigningTechnician &&
+  assignedTechnicianUserId &&
+  assignedTechnicianName
+) {
+  await createNotification({
+    userId: assignedTechnicianUserId,
+    type: "TECHNICIAN_ASSIGNED",
+    title: "Work order assigned",
+    message: `You have been assigned work order ${result.reference}.`,
+  });
+
+  if (assignedTechnicianEmail) {
+    await emailQueue.add("technician-assigned", {
+      idempotencyKey: `technician-assigned:${result.id}`,
+      to: assignedTechnicianEmail,
+      subject: `Work order ${result.reference} assigned to you`,
+      text: `You have been assigned work order ${result.reference}.`,
     });
   }
+}
 
   return result;
 }
@@ -1739,8 +1764,9 @@ export async function createClientRequest(
         id: userId,
       },
       select: {
-        clientId: true,
-      },
+  clientId: true,
+  email: true,
+},
     });
 
   if (!user) {
@@ -1896,6 +1922,13 @@ export async function createClientRequest(
         return workOrder;
       },
     );
+
+      await emailQueue.add("work-order-created", {
+    idempotencyKey: `work-order-created:${result.id}`,
+    to: user.email,
+    subject: `Work order ${result.reference} created`,
+    text: `Your work order ${result.reference} has been created successfully.`,
+  });
 
   return {
     reference:
@@ -2703,10 +2736,16 @@ export async function moveWorkOrderStatus(
     await prisma.workOrder.findUnique({
       where: { id },
       select: {
-        id: true,
-        status: true,
-        technicianId: true,
-      },
+  id: true,
+  reference: true,
+  status: true,
+  technicianId: true,
+  client: {
+    select: {
+      email: true,
+    },
+  },
+},
     });
 
   if (!workOrder) {
@@ -2813,6 +2852,15 @@ const nextStatus =
         return result;
       },
     );
+
+    if (nextStatus === "COMPLETED") {
+    await emailQueue.add("work-order-completed", {
+      idempotencyKey: `work-order-completed:${id}`,
+      to: workOrder.client.email,
+      subject: `Work order ${workOrder.reference} completed`,
+      text: `Your work order ${workOrder.reference} has been completed successfully.`,
+    });
+  }
 
   return updated;
 }

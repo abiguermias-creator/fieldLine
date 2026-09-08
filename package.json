@@ -30,6 +30,8 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
+    "bullmq": "^6.3.4",
+    "ioredis": "^6.0.0",
     "multer": "^2.2.0"
   }
 }

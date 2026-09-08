@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:worker": "tsx watch src/jobs/geocode.worker.ts",
+    "dev:email-worker": "tsx watch src/jobs/email.worker.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
+    "start:worker": "node dist/jobs/geocode.worker.js",
+    "start:email-worker": "node dist/jobs/email.worker.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -14,7 +18,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "lint": "eslint . --max-warnings 0"
+    "lint": "eslint . --max-warnings 0",
+    "dev:report-worker": "tsx watch src/jobs/report.worker.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -24,6 +29,7 @@
     "@prisma/client": "^6.1.0",
     "argon2": "^0.41.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",

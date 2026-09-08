@@ -293,6 +293,20 @@ model Notification {
   @@map("notifications")
 }
 
+model EmailDelivery {
+  id             String    @id @default(uuid())
+  idempotencyKey String    @unique
+  to             String
+  subject        String
+  status         String    @default("PENDING")
+  provider       String?
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+}
+
 enum WorkOrderStatus {
   NEW
   TRIAGED
