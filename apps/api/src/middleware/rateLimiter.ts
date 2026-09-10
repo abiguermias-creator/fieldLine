@@ -6,6 +6,7 @@ import {
   type RateLimiterAbstract,
 } from "rate-limiter-flexible";
 import { redis } from "../lib/redis.js";
+import { logger } from "../lib/logger.js";
 
 const loginMemoryLimiter = new RateLimiterMemory({
   points: 5,
@@ -23,6 +24,7 @@ const loginLimiter: RateLimiterAbstract = redis
       keyPrefix: "rl:login",
       points: 5,
       duration: 15 * 60,
+      insuranceLimiter: loginMemoryLimiter,
     })
   : loginMemoryLimiter;
 
@@ -32,6 +34,7 @@ const locationPingLimiter: RateLimiterAbstract = redis
       keyPrefix: "rl:pings",
       points: 4,
       duration: 60,
+      insuranceLimiter: locationMemoryLimiter,
     })
   : locationMemoryLimiter;
 
@@ -55,17 +58,27 @@ function createRateLimitMiddleware(
 
       next();
     } catch (rateLimitError) {
-  const retryAfter = Math.max(
-    1,
-    Math.ceil(
-      ((rateLimitError as { msBeforeNext?: number }).msBeforeNext ?? 0) / 1000,
-    ),
-  );
+      if (rateLimitError instanceof Error) {
+        logger.error(
+          { error: rateLimitError },
+          "Rate limiter store unavailable, continuing with insurance limiter",
+        );
 
-  res.setHeader("Retry-After", retryAfter);
-  res.setHeader("X-RateLimit-Limit", limiter.points);
-  res.setHeader("X-RateLimit-Remaining", 0);
-  res.setHeader("X-RateLimit-Reset", retryAfter);
+        return next();
+      }
+
+      const retryAfter = Math.max(
+        1,
+        Math.ceil(
+          ((rateLimitError as { msBeforeNext?: number }).msBeforeNext ?? 0) /
+            1000,
+        ),
+      );
+
+      res.setHeader("Retry-After", retryAfter);
+      res.setHeader("X-RateLimit-Limit", limiter.points);
+      res.setHeader("X-RateLimit-Remaining", 0);
+      res.setHeader("X-RateLimit-Reset", retryAfter);
 
       return res.status(429).json({
         error: {

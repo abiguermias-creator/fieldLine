@@ -33,3 +33,16 @@ const result = await fetchFn();
 
   return result;
 }
+
+export async function deleteCache(key: string): Promise<void> {
+  if (!redis) {
+    return;
+  }
+
+  try {
+    await redis.del(key);
+    logger.info({ key }, "Redis cache entry deleted");
+  } catch (err) {
+    logger.warn({ key, err }, "Redis cache delete failed");
+  }
+}
