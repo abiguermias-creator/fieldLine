@@ -19,6 +19,14 @@ import {
   TechnicianUnavailableError,
 } from "../lib/errors.js";
 
+
+export function buildTechnicianAssignmentIdempotencyKey(
+  workOrderId: string,
+  technicianId: string,
+) {
+  return `technician-assigned:${workOrderId}:${technicianId}`;
+}
+
 type WorkOrderPriority = "P1" | "P2" | "P3" | "P4";
 
 type WorkOrderStatus =
@@ -1642,6 +1650,7 @@ if (blockingViolation) {
 
   if (
   assigningTechnician &&
+  data.technicianId &&
   assignedTechnicianUserId &&
   assignedTechnicianName
 ) {
@@ -1654,7 +1663,10 @@ if (blockingViolation) {
 
   if (assignedTechnicianEmail) {
     await emailQueue.add("technician-assigned", {
-      idempotencyKey: `technician-assigned:${result.id}:${data.technicianId}`,
+      idempotencyKey: buildTechnicianAssignmentIdempotencyKey(
+        result.id,
+        data.technicianId,
+      ),
       to: assignedTechnicianEmail,
       subject: `Work order ${result.reference} assigned to you`,
       text: `You have been assigned work order ${result.reference}.`,

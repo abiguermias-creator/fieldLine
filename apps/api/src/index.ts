@@ -3,6 +3,10 @@ import { config } from "./lib/config.js";
 import { logger } from "./lib/logger.js";
 import { prisma } from "./db/client.js";
 
+if (!config.REDIS_URL) {
+  throw new Error("REDIS_URL is required for API startup");
+}
+
 const app = createApp();
 
 const server = app.listen(config.PORT, () => {

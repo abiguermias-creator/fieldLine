@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 describe("Stage 5 background jobs", () => {
-  it("fails loudly when REDIS_URL is missing", async () => {
+  it("allows queue module to be imported without REDIS_URL", async () => {
     vi.resetModules();
 
     vi.mock("../../src/lib/redis.js", () => ({
@@ -12,21 +12,59 @@ describe("Stage 5 background jobs", () => {
       Queue: vi.fn(),
     }));
 
-    await expect(
-      import("../../src/jobs/queue.js"),
-    ).rejects.toThrow(
-      "REDIS_URL is required for background queues",
-    );
+    const queueModule = await import("../../src/jobs/queue.js");
+
+    expect(queueModule.emailQueue).toBeDefined();
+    expect(queueModule.geocodeQueue).toBeDefined();
+    expect(queueModule.reportQueue).toBeDefined();
+    expect(queueModule.deadLetterQueue).toBeDefined();
   });
 
-  it("includes technician id in assignment email idempotency key", () => {
-    const workOrderId = "work-order-123";
-    const technicianId = "technician-456";
+  it("builds the assignment email idempotency key using the technician id", async () => {
+    vi.resetModules();
 
-    const idempotencyKey =
-      `technician-assigned:${workOrderId}:${technicianId}`;
+    vi.mock("../../src/db/client.js", () => ({
+      prisma: {},
+    }));
 
-    expect(idempotencyKey).toBe(
+    vi.mock("../../src/geocode/geocode.service.js", () => ({
+      geocodeAddress: vi.fn(),
+    }));
+
+    vi.mock("../../src/notifications/notification.service.js", () => ({
+      createNotification: vi.fn(),
+    }));
+
+    vi.mock("../../src/weather/weather.service.js", () => ({
+      getWeatherForecast: vi.fn(),
+    }));
+
+    vi.mock("../../src/integrations/osrm.js", () => ({
+      getTravelTime: vi.fn(),
+    }));
+
+    vi.mock("../../src/jobs/email.queue.js", () => ({
+      emailQueue: {
+        add: vi.fn(),
+      },
+    }));
+
+    vi.mock("../../src/lib/config.js", () => ({
+      config: {
+        REDIS_URL: undefined,
+        LOG_LEVEL: "info",
+      },
+    }));
+
+    const { buildTechnicianAssignmentIdempotencyKey } =
+      await import("../../src/work-orders/work-order.service.js");
+
+    expect(
+      buildTechnicianAssignmentIdempotencyKey(
+        "work-order-123",
+        "technician-456",
+      ),
+    ).toBe(
       "technician-assigned:work-order-123:technician-456",
     );
   });
