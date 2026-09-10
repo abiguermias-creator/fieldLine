@@ -1,5 +1,6 @@
 import { config } from "../lib/config.js";
 import { logger } from "../lib/logger.js";
+import { getOrSetCache } from "../lib/cache.js";
 import { resilientFetch } from "./httpClient.js";
 
 interface OsrmResponse {
@@ -57,44 +58,57 @@ export async function getTravelTime(
   lat2: number,
   lon2: number,
 ): Promise<TravelEstimateResult> {
-  const osrmUrl =
-    `${config.OSRM_BASE_URL}/route/v1/driving/` +
-    `${lon1},${lat1};${lon2},${lat2}` +
-    "?overview=false";
+  const cacheKey = `route:${lat1},${lon1}:${lat2},${lon2}`;
 
-  try {
-    const data = await resilientFetch<OsrmResponse>(
-      osrmUrl,
-      {
-        timeoutMs: 2500,
-        maxRetries: 1,
-      },
-    );
+  const cachedResult = await getOrSetCache<TravelEstimateResult | null>(
+    cacheKey,
+    24 * 60 * 60,
+    async () => {
+      const osrmUrl =
+        `${config.OSRM_BASE_URL}/route/v1/driving/` +
+        `${lon1},${lat1};${lon2},${lat2}` +
+        "?overview=false";
 
-    if (data.code === "Ok" && data.routes?.[0]) {
-      return {
-        minutes: Math.max(
-          1,
-          Math.ceil(data.routes[0].duration / 60),
-        ),
-        distanceKm:
-          Math.round(
-            (data.routes[0].distance / 1000) * 10,
-          ) / 10,
-        source: "routing",
-      };
-    }
-  } catch (error) {
-    logger.warn(
-      { error },
-      "OSRM routing unavailable, using straight-line fallback",
-    );
-  }
+      try {
+        const data = await resilientFetch<OsrmResponse>(
+          osrmUrl,
+          {
+            timeoutMs: 2500,
+            maxRetries: 1,
+          },
+        );
 
-  return calculateStraightLineTravel(
-    lat1,
-    lon1,
-    lat2,
-    lon2,
+        if (data.code === "Ok" && data.routes?.[0]) {
+          return {
+            minutes: Math.max(
+              1,
+              Math.ceil(data.routes[0].duration / 60),
+            ),
+            distanceKm:
+              Math.round(
+                (data.routes[0].distance / 1000) * 10,
+              ) / 10,
+            source: "routing",
+          };
+        }
+      } catch (error) {
+        logger.warn(
+          { error },
+          "OSRM routing unavailable, using straight-line fallback",
+        );
+      }
+
+      return null;
+    },
+  );
+
+  return (
+    cachedResult ??
+    calculateStraightLineTravel(
+      lat1,
+      lon1,
+      lat2,
+      lon2,
+    )
   );
 }
