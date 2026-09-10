@@ -38,7 +38,7 @@ const locationPingLimiter: RateLimiterAbstract = redis
     })
   : locationMemoryLimiter;
 
-function createRateLimitMiddleware(
+export function createRateLimitMiddleware(
   limiter: RateLimiterAbstract,
   keyGetter: (req: Request) => string,
 ) {
