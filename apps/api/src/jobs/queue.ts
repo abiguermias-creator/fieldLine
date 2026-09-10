@@ -1,16 +1,15 @@
 import { Queue, type ConnectionOptions } from "bullmq";
 import { redis } from "../lib/redis.js";
 
-const connection: ConnectionOptions = redis
-  ? {
-      host: redis.options.host ?? "localhost",
-      port: redis.options.port ?? 6379,
-      password: redis.options.password,
-    }
-  : {
-      host: "localhost",
-      port: 6379,
-    };
+if (!redis) {
+  throw new Error("REDIS_URL is required for background queues");
+}
+
+const connection: ConnectionOptions = {
+  host: redis.options.host ?? "localhost",
+  port: redis.options.port ?? 6379,
+  password: redis.options.password,
+};
 
 const defaultJobOptions = {
   attempts: 3,

@@ -1654,7 +1654,7 @@ if (blockingViolation) {
 
   if (assignedTechnicianEmail) {
     await emailQueue.add("technician-assigned", {
-      idempotencyKey: `technician-assigned:${result.id}`,
+      idempotencyKey: `technician-assigned:${result.id}:${data.technicianId}`,
       to: assignedTechnicianEmail,
       subject: `Work order ${result.reference} assigned to you`,
       text: `You have been assigned work order ${result.reference}.`,
