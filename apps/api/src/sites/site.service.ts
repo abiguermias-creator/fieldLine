@@ -1,5 +1,6 @@
 import { prisma } from "../db/client.js";
 import { geocodeQueue } from "../jobs/geocode.queue.js";
+import { deleteCache } from "../lib/cache.js";
 
 export async function createSite(data: {
   clientId: string;
@@ -12,7 +13,7 @@ export async function createSite(data: {
     data,
   });
 
-    await geocodeQueue.add("geocode-site", {
+  await geocodeQueue.add("geocode-site", {
     siteId: site.id,
   });
 
@@ -76,6 +77,32 @@ export async function updateSite(
     accessNotes?: string;
   },
 ) {
+  const existingSite = await prisma.site.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      address: true,
+      city: true,
+    },
+  });
+
+  if (
+    existingSite &&
+    (data.address !== undefined || data.city !== undefined)
+  ) {
+    const addressChanged =
+      data.address !== undefined && data.address !== existingSite.address;
+
+    const cityChanged =
+      data.city !== undefined && data.city !== existingSite.city;
+
+    if (addressChanged || cityChanged) {
+      const oldCacheKey = `geocode:${existingSite.city ?? ""}:${existingSite.address}`;
+      await deleteCache(oldCacheKey);
+    }
+  }
+
   return prisma.site.update({
     where: {
       id,

@@ -51,7 +51,7 @@ The ID is attached to the Express request, returned in the response header, and
 included in request logging.
 
 The Pino logger automatically redacts sensitive fields such as passwords,
-password hashes, authorization headers, tokens, and refresh tokens before they
+password hashes, authorization headers, tokens, and refresh tokens beforethey
 are written to the log stream.
 
 Domain failures use a shared `DomainError` hierarchy. The centralized Express
@@ -109,7 +109,7 @@ central resilient HTTP client prevents each integration from implementing
 different timeout and retry behavior.
 
 Timeouts prevent external requests from hanging application operations.
-Retries improve reliability for transient failures, while 4xx responses generally indicate invalid client requests and are not retried. HTTP 429 is treated as a temporary rate-limit condition and retried according to Retry-After when available.
+Retries improve reliability for transient failures, while 4xx responses generally indicate invalid client requests and are not retried. HTTP 429 istreated as a temporary rate-limit condition and retried according to Retry-After when available.
 
 The OSRM fallback ensures that scheduling can still estimate travel time when
 live routing is unavailable. Weather remains non-blocking because it is an
