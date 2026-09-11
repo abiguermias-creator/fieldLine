@@ -51,7 +51,7 @@ The ID is attached to the Express request, returned in the response header, and
 included in request logging.
 
 The Pino logger automatically redacts sensitive fields such as passwords,
-password hashes, authorization headers, tokens, and refresh tokens before they
+password hashes, authorization headers, tokens, and refresh tokens beforethey
 are written to the log stream.
 
 Domain failures use a shared `DomainError` hierarchy. The centralized Express
@@ -109,7 +109,7 @@ central resilient HTTP client prevents each integration from implementing
 different timeout and retry behavior.
 
 Timeouts prevent external requests from hanging application operations.
-Retries improve reliability for transient failures, while 4xx responses generally indicate invalid client requests and are not retried. HTTP 429 is treated as a temporary rate-limit condition and retried according to Retry-After when available.
+Retries improve reliability for transient failures, while 4xx responses generally indicate invalid client requests and are not retried. HTTP 429 istreated as a temporary rate-limit condition and retried according to Retry-After when available.
 
 The OSRM fallback ensures that scheduling can still estimate travel time when
 live routing is unavailable. Weather remains non-blocking because it is an
@@ -168,3 +168,41 @@ from abuse and runaway traffic.
 Database exclusion constraints enforce scheduling invariants at the database
 level, protecting against concurrency races that application-level
 check-then-act logic cannot guarantee.
+
+## Stage 5 — Asynchronous Processing and Background Queues
+
+### Decision
+
+Slow and failure-prone operations are handled asynchronously using BullMQ
+queues backed by Redis. Work order creation, assignment, and completion can
+queue email notifications, site geocoding runs through a background worker,
+and CSV report generation runs through a report worker.
+
+Jobs use deterministic idempotency keys for email delivery so duplicate jobs
+do not result in duplicate emails. Queued jobs use three attempts with
+exponential backoff. Jobs that still fail after their final attempt are
+copied to a shared dead-letter queue for later inspection.
+
+Workers handle SIGTERM and SIGINT gracefully by stopping new work, waiting
+for active jobs to finish, closing their Redis connections, and disconnecting
+from Prisma.
+
+### Verification
+
+The geocoding flow was verified end-to-end through BullMQ and Redis.
+Background email delivery was verified for work-order creation, and a
+duplicate email job with the same idempotency key was skipped after the
+first delivery succeeded. CSV report generation was successfully queued
+through BullMQ.
+
+### Reason
+
+Background queues keep slow or failure-prone external operations out of the
+HTTP request path, improving fault isolation and allowing automatic retries.
+Redis provides the shared queue infrastructure, while idempotency and
+dead-letter handling make at-least-once job delivery safer.
+
+The local work-order creation performance test measured approximately 1349 ms,
+so the <50 ms target was not demonstrated in the local environment. This
+measurement includes the HTTP client and local database environment and is
+recorded rather than treated as a production latency benchmark.

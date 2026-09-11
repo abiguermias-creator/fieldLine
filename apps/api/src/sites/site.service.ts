@@ -1,6 +1,5 @@
 import { prisma } from "../db/client.js";
-import { geocodeSite } from "../geocode/geocode.service.js";
-import { logger } from "../lib/logger.js";
+import { geocodeQueue } from "../jobs/geocode.queue.js";
 import { deleteCache } from "../lib/cache.js";
 
 export async function createSite(data: {
@@ -14,9 +13,8 @@ export async function createSite(data: {
     data,
   });
 
-  // background geocoding
-  geocodeSite(site.id).catch((error) => {
-    logger.error({ error }, "Background geocoding failed");
+  await geocodeQueue.add("geocode-site", {
+    siteId: site.id,
   });
 
   return site;

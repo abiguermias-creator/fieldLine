@@ -7,21 +7,21 @@ export async function getOrSetCache<T>(
   fetchFn: () => Promise<T>,
 ): Promise<T> {
   if (!redis) {
-  return fetchFn();
-}
-
-try {
-  const cached = await redis.get(key);
-
-  if (cached) {
-    logger.info({ key }, "Redis cache hit");
-    return JSON.parse(cached) as T;
+    return fetchFn();
   }
-} catch (err) {
-  logger.warn({ key, err }, "Redis cache get failed, proceeding to source");
-}
 
-const result = await fetchFn();
+  try {
+    const cached = await redis.get(key);
+
+    if (cached) {
+      logger.info({ key }, "Redis cache hit");
+      return JSON.parse(cached) as T;
+    }
+  } catch (err) {
+    logger.warn({ key, err }, "Redis cache get failed, proceeding to source");
+  }
+
+  const result = await fetchFn();
 
   if (redis && result !== undefined && result !== null) {
     try {
