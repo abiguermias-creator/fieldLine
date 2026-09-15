@@ -1,12 +1,6 @@
 {
   "name": "@fieldline/web",
   "version": "2.2.0",
-  "homepage": "https://mantisdashboard.com/free",
-  "author": {
-    "name": "CodedThemes",
-    "email": "codedthemes@gmail.com",
-    "url": "https://codedthemes.com/"
-  },
   "scripts": {
     "dev": "vite",
     "start": "vite",
@@ -25,6 +19,7 @@
     "@emotion/styled": "11.14.1",
     "@fieldline/shared": "*",
     "@fontsource/public-sans": "5.2.7",
+    "@mui/icons-material": "^9.0.1",
     "@mui/lab": "9.0.0-beta.3",
     "@mui/material": "9.0.1",
     "@mui/system": "9.0.1",

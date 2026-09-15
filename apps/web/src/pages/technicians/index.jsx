@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
@@ -15,18 +15,9 @@ import MainCard from 'components/MainCard';
 
 import { getSkills } from 'api/skills';
 
-import {
-  getTechnicians,
-  createTechnician,
-  deactivateTechnician,
-  activateTechnician
-} from 'api/technicians';
+import { getTechnicians, createTechnician, deactivateTechnician, activateTechnician } from 'api/technicians';
 
-import {
-  getTechnicianSkills,
-  addTechnicianSkill,
-  removeTechnicianSkill
-} from 'api/technicianSkills';
+import { getTechnicianSkills, addTechnicianSkill, removeTechnicianSkill } from 'api/technicianSkills';
 
 export default function Technicians() {
   const [technicians, setTechnicians] = useState([]);
@@ -61,7 +52,7 @@ export default function Technicians() {
 
   const [message, setMessage] = useState('');
 
-  async function loadTechnicians() {
+  const loadTechnicians = useCallback(async () => {
     try {
       const data = await getTechnicians(page, 25, search, skillFilter);
 
@@ -75,13 +66,9 @@ export default function Technicians() {
         }
       );
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-          'Failed to load technicians'
-      );
+      setMessage(error.response?.data?.message || 'Failed to load technicians');
     }
-  }
+  }, [page, search, skillFilter]);
 
   async function loadSkills() {
     try {
@@ -89,17 +76,13 @@ export default function Technicians() {
 
       setSkills(Array.isArray(data) ? data : []);
     } catch (error) {
-
-      setSkillMessage(
-        error.response?.data?.message ||
-          'Failed to load skills'
-      );
+      setSkillMessage(error.response?.data?.message || 'Failed to load skills');
     }
   }
 
   useEffect(() => {
     loadTechnicians();
-  }, [page, search, skillFilter]);
+  }, [loadTechnicians]);
 
   useEffect(() => {
     loadSkills();
@@ -112,13 +95,9 @@ export default function Technicians() {
       setTechnicianSkills(Array.isArray(data) ? data : []);
       setSkillMessage('');
     } catch (error) {
-
       setTechnicianSkills([]);
 
-      setSkillMessage(
-        error.response?.data?.message ||
-          'Failed to load technician skills'
-      );
+      setSkillMessage(error.response?.data?.message || 'Failed to load technician skills');
     }
   }
 
@@ -139,8 +118,7 @@ export default function Technicians() {
         fullName: form.fullName,
         employeeCode: form.employeeCode,
         baseLocation: form.baseLocation,
-        maxWorkingMinutesPerDay:
-          Number(form.maxWorkingMinutesPerDay) || 480,
+        maxWorkingMinutesPerDay: Number(form.maxWorkingMinutesPerDay) || 480,
         phone: form.phone || undefined,
         bio: form.bio || undefined
       };
@@ -162,12 +140,7 @@ export default function Technicians() {
 
       await loadTechnicians();
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to create technician'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to create technician');
     }
   }
 
@@ -193,12 +166,7 @@ export default function Technicians() {
         );
       }
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to deactivate technician'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to deactivate technician');
     }
   }
 
@@ -224,12 +192,7 @@ export default function Technicians() {
         );
       }
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to activate technician'
-      );
+      setMessage(error.response?.data?.message || error.message || 'Failed to activate technician');
     }
   }
 
@@ -245,34 +208,19 @@ export default function Technicians() {
     }
 
     try {
-      await addTechnicianSkill(
-        selectedTechnician.id,
-        {
-          skillId: selectedSkill,
-          certificationExpiresAt:
-            certificationExpiresAt
-              ? new Date(
-                  `${certificationExpiresAt}T00:00:00`
-                ).toISOString()
-              : null
-        }
-      );
+      await addTechnicianSkill(selectedTechnician.id, {
+        skillId: selectedSkill,
+        certificationExpiresAt: certificationExpiresAt ? new Date(`${certificationExpiresAt}T00:00:00`).toISOString() : null
+      });
 
       setSkillMessage('Skill added successfully');
 
       setSelectedSkill('');
       setCertificationExpiresAt('');
 
-      await loadTechnicianSkills(
-        selectedTechnician.id
-      );
+      await loadTechnicianSkills(selectedTechnician.id);
     } catch (error) {
-
-      setSkillMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to add skill'
-      );
+      setSkillMessage(error.response?.data?.message || error.message || 'Failed to add skill');
     }
   }
 
@@ -282,23 +230,13 @@ export default function Technicians() {
     }
 
     try {
-      await removeTechnicianSkill(
-        selectedTechnician.id,
-        skillId
-      );
+      await removeTechnicianSkill(selectedTechnician.id, skillId);
 
       setSkillMessage('Skill removed successfully');
 
-      await loadTechnicianSkills(
-        selectedTechnician.id
-      );
+      await loadTechnicianSkills(selectedTechnician.id);
     } catch (error) {
-
-      setSkillMessage(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to remove skill'
-      );
+      setSkillMessage(error.response?.data?.message || error.message || 'Failed to remove skill');
     }
   }
 
@@ -402,18 +340,11 @@ export default function Technicians() {
           }
         />
 
-        <Button
-          variant="contained"
-          onClick={handleCreateTechnician}
-        >
+        <Button variant="contained" onClick={handleCreateTechnician}>
           Create Technician
         </Button>
 
-        {message && (
-          <Typography>
-            {message}
-          </Typography>
-        )}
+        {message && <Typography>{message}</Typography>}
       </Stack>
 
       <Divider sx={{ mb: 3 }} />
@@ -449,93 +380,52 @@ export default function Technicians() {
               }}
             >
               <ListItemText
-                primary={
-                  technician.user?.fullName ||
-                  'Unnamed Technician'
-                }
+                primary={technician.user?.fullName || 'Unnamed Technician'}
                 secondary={
                   <>
-                    Email:{' '}
-                    {technician.user?.email ||
-                      'No email'}
+                    Email: {technician.user?.email || 'No email'}
                     <br />
-                    Employee Code:{' '}
-                    {technician.employeeCode}
+                    Employee Code: {technician.employeeCode}
                     <br />
-                    Base Location:{' '}
-                    {technician.baseLocation}
+                    Base Location: {technician.baseLocation}
                     <br />
-                    Maximum Working Minutes:{' '}
-                    {technician.maxWorkingMinutesPerDay}
+                    Maximum Working Minutes: {technician.maxWorkingMinutesPerDay}
                     <br />
-                    Status:{' '}
-                    {technician.user?.isActive
-                      ? 'Active'
-                      : 'Inactive'}
+                    Status: {technician.user?.isActive ? 'Active' : 'Inactive'}
                   </>
                 }
               />
               <TextField
-  select
-  label="Filter by skill"
-  value={skillFilter}
-  onChange={(e) => {
-    setPage(1);
-    setSkillFilter(e.target.value);
-  }}
-  sx={{ mb: 2 }}
-  fullWidth
->
-  <MenuItem value="">
-    All skills
-  </MenuItem>
-
-  {skills.map((skill) => (
-    <MenuItem key={skill.id} value={skill.id}>
-      {skill.name} ({skill.code})
-    </MenuItem>
-  ))}
-</TextField>
-              <Stack
-                direction="row"
-                spacing={1}
+                select
+                label="Filter by skill"
+                value={skillFilter}
+                onChange={(e) => {
+                  setPage(1);
+                  setSkillFilter(e.target.value);
+                }}
+                sx={{ mb: 2 }}
+                fullWidth
               >
+                <MenuItem value="">All skills</MenuItem>
+
+                {skills.map((skill) => (
+                  <MenuItem key={skill.id} value={skill.id}>
+                    {skill.name} ({skill.code})
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Stack direction="row" spacing={1}>
                 <Button
-                  variant={
-                    selectedTechnician?.id ===
-                    technician.id
-                      ? 'contained'
-                      : 'outlined'
-                  }
-                  onClick={() =>
-                    handleSelectTechnician(
-                      technician
-                    )
-                  }
+                  variant={selectedTechnician?.id === technician.id ? 'contained' : 'outlined'}
+                  onClick={() => handleSelectTechnician(technician)}
                 >
                   Skills
                 </Button>
 
                 {technician.user?.isActive ? (
-                  <Button
-                    onClick={() =>
-                      handleDeactivateTechnician(
-                        technician.id
-                      )
-                    }
-                  >
-                    Deactivate
-                  </Button>
+                  <Button onClick={() => handleDeactivateTechnician(technician.id)}>Deactivate</Button>
                 ) : (
-                  <Button
-                    onClick={() =>
-                      handleActivateTechnician(
-                        technician.id
-                      )
-                    }
-                  >
-                    Activate
-                  </Button>
+                  <Button onClick={() => handleActivateTechnician(technician.id)}>Activate</Button>
                 )}
               </Stack>
             </ListItem>
@@ -545,21 +435,14 @@ export default function Technicians() {
 
       <Box sx={{ mt: 3 }}>
         <Typography>
-          Page {pagination.page} of{' '}
-          {pagination.pages}
+          Page {pagination.page} of {pagination.pages}
         </Typography>
 
-        <Button
-          disabled={page <= 1}
-          onClick={() => setPage(page - 1)}
-        >
+        <Button disabled={page <= 1} onClick={() => setPage(page - 1)}>
           Previous
         </Button>
 
-        <Button
-          disabled={page >= pagination.pages}
-          onClick={() => setPage(page + 1)}
-        >
+        <Button disabled={page >= pagination.pages} onClick={() => setPage(page + 1)}>
           Next
         </Button>
       </Box>
@@ -573,32 +456,15 @@ export default function Technicians() {
           </Typography>
 
           <Typography sx={{ mb: 2 }}>
-            Technician:{' '}
-            <strong>
-              {selectedTechnician.user?.fullName ||
-                'Unnamed Technician'}
-            </strong>
+            Technician: <strong>{selectedTechnician.user?.fullName || 'Unnamed Technician'}</strong>
           </Typography>
 
           <Stack spacing={2}>
-            <TextField
-              select
-              label="Select Skill"
-              value={selectedSkill}
-              onChange={(e) =>
-                setSelectedSkill(e.target.value)
-              }
-              fullWidth
-            >
-              <MenuItem value="">
-                Select a skill
-              </MenuItem>
+            <TextField select label="Select Skill" value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)} fullWidth>
+              <MenuItem value="">Select a skill</MenuItem>
 
               {skills.map((skill) => (
-                <MenuItem
-                  key={skill.id}
-                  value={skill.id}
-                >
+                <MenuItem key={skill.id} value={skill.id}>
                   {skill.name} ({skill.code})
                 </MenuItem>
               ))}
@@ -608,99 +474,57 @@ export default function Technicians() {
               label="Certification Expiry"
               type="date"
               value={certificationExpiresAt}
-              onChange={(e) =>
-                setCertificationExpiresAt(e.target.value)
-              }
-              InputLabelProps={{shrink: true}}
+              onChange={(e) => setCertificationExpiresAt(e.target.value)}
+              InputLabelProps={{ shrink: true }}
             />
 
-            <Button
-              variant="contained"
-              onClick={handleAddSkill}
-            >
+            <Button variant="contained" onClick={handleAddSkill}>
               Add Skill
             </Button>
 
-            {skillMessage && (
-              <Typography>
-                {skillMessage}
-              </Typography>
-            )}
+            {skillMessage && <Typography>{skillMessage}</Typography>}
           </Stack>
 
-          <Typography
-            variant="h6"
-            sx={{ mt: 3, mb: 1 }}
-          >
+          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Current Skills
           </Typography>
 
           <List>
             {technicianSkills.length === 0 ? (
               <ListItem>
-                <ListItemText
-                  primary="No skills assigned"
-                />
+                <ListItemText primary="No skills assigned" />
               </ListItem>
             ) : (
-              technicianSkills.map(
-                (technicianSkill) => {
-                  const skill =
-                    technicianSkill.skill;
+              technicianSkills.map((technicianSkill) => {
+                const skill = technicianSkill.skill;
 
-                  const skillId =
-                    technicianSkill.skillId ||
-                    skill?.id;
+                const skillId = technicianSkill.skillId || skill?.id;
 
-                  return (
-                    <ListItem
-                      key={
-                        technicianSkill.id ||
-                        skillId
+                return (
+                  <ListItem key={technicianSkill.id || skillId} divider>
+                    <ListItemText
+                      primary={skill?.name || technicianSkill.name || 'Unknown skill'}
+                      secondary={
+                        <>
+                          Code: {skill?.code || technicianSkill.code || 'N/A'}
+                          {technicianSkill.certificationExpiresAt && (
+                            <>
+                              <br />
+                              Certification expires: {new Date(technicianSkill.certificationExpiresAt).toLocaleDateString()}
+                            </>
+                          )}
+                        </>
                       }
-                      divider
-                    >
-                      <ListItemText
-                        primary={
-                          skill?.name ||
-                          technicianSkill.name ||
-                          'Unknown skill'
-                        }
-                        secondary={
-                          <>
-                            Code:{' '}
-                            {skill?.code ||
-                              technicianSkill.code ||
-                              'N/A'}
-                            {technicianSkill.certificationExpiresAt && (
-                              <>
-                                <br />
-                                Certification expires:{' '}
-                                {new Date(
-                                  technicianSkill.certificationExpiresAt
-                                ).toLocaleDateString()}
-                              </>
-                            )}
-                          </>
-                        }
-                      />
+                    />
 
-                      {skillId && (
-                        <Button
-                          color="error"
-                          onClick={() =>
-                            handleRemoveSkill(
-                              skillId
-                            )
-                          }
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </ListItem>
-                  );
-                }
-              )
+                    {skillId && (
+                      <Button color="error" onClick={() => handleRemoveSkill(skillId)}>
+                        Remove
+                      </Button>
+                    )}
+                  </ListItem>
+                );
+              })
             )}
           </List>
         </>

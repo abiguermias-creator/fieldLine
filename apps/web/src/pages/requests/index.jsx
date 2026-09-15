@@ -101,7 +101,6 @@ export default function ClientRequest() {
       setP1Confirmed(false);
       setDuplicateConfirmed(false);
     } catch (err) {
-
       const responseData = err.response?.data;
 
       if (responseData?.code === 'POSSIBLE_DUPLICATE') {
@@ -311,4 +310,3 @@ export default function ClientRequest() {
     </Stack>
   );
 }
-

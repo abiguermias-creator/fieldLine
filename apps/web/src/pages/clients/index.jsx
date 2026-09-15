@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
@@ -33,19 +33,18 @@ export default function Clients() {
 
   const [message, setMessage] = useState('');
 
-  async function loadClients() {
+  const loadClients = useCallback(async () => {
     try {
       const data = await getClients(page, search);
 
       setClients(data.data || []);
       setPagination(data.pagination);
-    } catch {
-    }
-  }
+    } catch {}
+  }, [page, search]);
 
   useEffect(() => {
     loadClients();
-  }, [page, search]);
+  }, [loadClients]);
 
   async function handleCreateClient() {
     try {
@@ -221,4 +220,3 @@ export default function Clients() {
     </MainCard>
   );
 }
-

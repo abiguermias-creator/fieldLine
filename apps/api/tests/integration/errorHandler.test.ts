@@ -1,13 +1,44 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { createApp } from "../../src/app.js";
+import express from "express";
+import { z } from "zod";
+import { InvalidTransitionError } from "../../src/lib/errors.js";
+import { errorHandler } from "../../src/middleware/errorHandler.js";
+import { requestIdMiddleware } from "../../src/middleware/requestId.js";
 
-const app = createApp();
+const errorTestApp = express();
+
+errorTestApp.use(requestIdMiddleware);
+errorTestApp.use(express.json());
+
+errorTestApp.get("/error-409", (_req, _res, next) => {
+  next(
+    new InvalidTransitionError(
+      "This transition is not allowed.",
+    ),
+  );
+});
+
+errorTestApp.post("/error-422", (_req, _res, next) => {
+  const schema = z.object({
+    requiredField: z.string(),
+  });
+
+  const result = schema.safeParse({});
+
+  if (!result.success) {
+    return next(result.error);
+  }
+
+  return next();
+});
+
+errorTestApp.use(errorHandler);
 
 describe("error envelopes", () => {
-  it("returns a consistent 409 error envelope with request ID", async () => {
-    const response = await request(app)
-      .get("/api/test/error-409")
+  it("returns a consistent 409 error envelope with request ID", async() => {
+    const response = await request(errorTestApp)
+      .get("/error-409")
       .set("x-request-id", "test-request-409");
 
     expect(response.status).toBe(409);
@@ -19,9 +50,9 @@ describe("error envelopes", () => {
     expect(response.body.error.requestId).toBe("test-request-409");
   });
 
-  it("returns a consistent 422 error envelope with request ID", async () => {
-    const response = await request(app)
-      .post("/api/test/error-422")
+  it("returns a consistent 422 error envelope with request ID", async() => {
+    const response = await request(errorTestApp)
+      .post("/error-422")
       .set("x-request-id", "test-request-422")
       .send({});
 

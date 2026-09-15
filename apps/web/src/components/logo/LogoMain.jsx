@@ -4,22 +4,10 @@ export default function LogoMain() {
   const theme = useTheme();
 
   return (
-    <svg
-      width="150"
-      height="40"
-      viewBox="0 0 150 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M20 4L32 16L20 28L8 16L20 4Z"
-        fill={theme.vars.palette.primary.main}
-      />
+    <svg width="150" height="40" viewBox="0 0 150 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 4L32 16L20 28L8 16L20 4Z" fill={theme.vars.palette.primary.main} />
 
-      <path
-        d="M20 10L26 16L20 22L14 16L20 10Z"
-        fill={theme.vars.palette.primary.dark}
-      />
+      <path d="M20 10L26 16L20 22L14 16L20 10Z" fill={theme.vars.palette.primary.dark} />
 
       {/* Fieldline text */}
       <text

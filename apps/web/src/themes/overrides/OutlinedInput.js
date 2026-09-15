@@ -22,7 +22,7 @@ export default function OutlinedInput(theme) {
   return {
     MuiOutlinedInput: {
       styleOverrides: {
-        input: { padding: 'var(--mantis-input-padding, 10.5px 14px 10.5px 12px)' },
+        input: { padding: 'var(--fieldline-input-padding, 10.5px 14px 10.5px 12px)' },
         notchedOutline: {
           borderColor: theme.vars.palette.grey[300]
         },
@@ -30,7 +30,7 @@ export default function OutlinedInput(theme) {
           ...getColor({ variant: 'primary', theme }),
           '&.Mui-error': { ...getColor({ variant: 'error', theme }) }
         },
-        sizeSmall: { '& .MuiOutlinedInput-input': { padding: 'var(--mantis-input-padding-small, 7.5px 8px 7.5px 12px)' } },
+        sizeSmall: { '& .MuiOutlinedInput-input': { padding: 'var(--fieldline-input-padding-small, 7.5px 8px 7.5px 12px)' } },
         multiline: { '& .MuiOutlinedInput-input': { padding: 0 } },
         colorSecondary: getColor({ variant: 'secondary', theme }),
         colorError: getColor({ variant: 'error', theme }),

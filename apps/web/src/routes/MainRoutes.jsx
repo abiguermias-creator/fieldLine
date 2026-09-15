@@ -9,12 +9,6 @@ import RoleRoute from './RoleRoute';
 // render dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
 
-// render pages
-const Color = Loadable(lazy(() => import('pages/component-overview/color')));
-const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
-const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
-const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
-
 // pages
 const Clients = Loadable(lazy(() => import('pages/clients')));
 const Sites = Loadable(lazy(() => import('pages/sites')));
@@ -34,10 +28,6 @@ const MainRoutes = {
     {
       element: <DashboardLayout />,
       children: [
-        {
-          index: true,
-          element: <DashboardDefault />
-        },
         {
           path: 'dashboard/default',
           element: <DashboardDefault />
@@ -86,22 +76,6 @@ const MainRoutes = {
               element: <DispatcherBoard />
             }
           ]
-        },
-        {
-          path: 'typography',
-          element: <Typography />
-        },
-        {
-          path: 'color',
-          element: <Color />
-        },
-        {
-          path: 'shadow',
-          element: <Shadow />
-        },
-        {
-          path: 'sample-page',
-          element: <SamplePage />
         }
       ]
     }

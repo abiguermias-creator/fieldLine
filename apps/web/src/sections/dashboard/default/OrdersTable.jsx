@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { getWorkOrders } from "../../../api/workOrder";
-import Box from "@mui/material/Box";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
+import { useEffect, useState } from 'react';
+import { getWorkOrders } from '../../../api/workOrder';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 export default function OrderTable() {
   const [rows, setRows] = useState([]);
 
@@ -15,8 +15,7 @@ export default function OrderTable() {
       try {
         const data = await getWorkOrders();
         setRows(data.items);
-      } catch {
-}
+      } catch {}
     }
 
     loadWorkOrders();
@@ -26,12 +25,12 @@ export default function OrderTable() {
     <Box>
       <TableContainer
         sx={{
-          width: "100%",
-          overflowX: "auto",
-          position: "relative",
-          display: "block",
-          maxWidth: "100%",
-          "& td, & th": { whiteSpace: "nowrap" }
+          width: '100%',
+          overflowX: 'auto',
+          position: 'relative',
+          display: 'block',
+          maxWidth: '100%',
+          '& td, & th': { whiteSpace: 'nowrap' }
         }}
       >
         <Table>
@@ -63,4 +62,3 @@ export default function OrderTable() {
     </Box>
   );
 }
-

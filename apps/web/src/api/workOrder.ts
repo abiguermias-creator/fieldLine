@@ -95,38 +95,20 @@ export async function getAssignmentOptions(workOrderId: string) {
   return response.data;
 }
 
-export async function unassignWorkOrder(
-  id: string,
-  reason: string,
-) {
-  const response = await api.patch(
-    `/work-orders/${id}/unassign`,
-    { reason },
-  );
+export async function unassignWorkOrder(id: string, reason: string) {
+  const response = await api.patch(`/work-orders/${id}/unassign`, { reason });
 
   return response.data;
 }
 
-export async function moveWorkOrderStatus(
-  id: string,
-  action?: 'advance' | 'hold' | 'resume' | 'complete',
-) {
-  const response = await api.patch(
-    `/work-orders/${id}/status-action`,
-    { action },
-  );
+export async function moveWorkOrderStatus(id: string, action?: 'advance' | 'hold' | 'resume' | 'complete') {
+  const response = await api.patch(`/work-orders/${id}/status-action`, { action });
 
   return response.data;
 }
 
-export async function markWorkOrderWaitingOnParts(
-  id: string,
-  description: string,
-) {
-  const response = await api.patch(
-    `/work-orders/${id}/waiting-on-parts`,
-    { description },
-  );
+export async function markWorkOrderWaitingOnParts(id: string, description: string) {
+  const response = await api.patch(`/work-orders/${id}/waiting-on-parts`, { description });
 
   return response.data;
 }
@@ -137,50 +119,30 @@ export type CreateWorkLogData = {
   partsUsed?: string;
 };
 
-export async function createWorkLog(
-  workOrderId: string,
-  data: CreateWorkLogData,
-) {
-  const response = await api.post(
-    `/work-orders/${workOrderId}/work-logs`,
-    data,
-  );
+export async function createWorkLog(workOrderId: string, data: CreateWorkLogData) {
+  const response = await api.post(`/work-orders/${workOrderId}/work-logs`, data);
 
   return response.data;
 }
 
-export async function getWorkLogs(
-  workOrderId: string,
-) {
-  const response = await api.get(
-    `/work-orders/${workOrderId}/work-logs`,
-  );
+export async function getWorkLogs(workOrderId: string) {
+  const response = await api.get(`/work-orders/${workOrderId}/work-logs`);
 
   return response.data;
 }
 
-export async function getWorkOrderPhotos(
-  workOrderId: string,
-) {
-  const response = await api.get(
-    `/work-orders/${workOrderId}/photos`,
-  );
+export async function getWorkOrderPhotos(workOrderId: string) {
+  const response = await api.get(`/work-orders/${workOrderId}/photos`);
 
   return response.data;
 }
 
-export async function uploadWorkOrderPhoto(
-  workOrderId: string,
-  file: File,
-) {
+export async function uploadWorkOrderPhoto(workOrderId: string, file: File) {
   const formData = new FormData();
 
-  formData.append("photo", file);
+  formData.append('photo', file);
 
-  const response = await api.post(
-  `/work-orders/${workOrderId}/photos`,
-  formData,
-);
+  const response = await api.post(`/work-orders/${workOrderId}/photos`, formData);
 
   return response.data;
 }

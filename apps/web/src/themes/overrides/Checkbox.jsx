@@ -4,9 +4,9 @@ import PropTypes from 'prop-types';
 import getColors from 'utils/getColors';
 
 // assets
-import { BorderOutlined } from "@ant-design/icons";
-import { CheckSquareFilled } from "@ant-design/icons";
-import { MinusSquareFilled } from "@ant-design/icons";
+import { BorderOutlined } from '@ant-design/icons';
+import { CheckSquareFilled } from '@ant-design/icons';
+import { MinusSquareFilled } from '@ant-design/icons';
 
 // ==============================|| RADIO - COLORS ||============================== //
 
