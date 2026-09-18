@@ -64,10 +64,10 @@ const engineeringHighlights = [
 ];
 
 const demoAccounts = [
-['Dispatcher', '[admin@fieldline.com](mailto:admin@fieldline.com)'],
-['Technician', '[technician@fieldline.com](mailto:technician@fieldline.com)'],
-['Supervisor', '[supervisor@fieldline.com](mailto:supervisor@fieldline.com)'],
-['Client', '[client@abc.com](mailto:client@abc.com)']
+  ['Dispatcher', 'admin@fieldline.com'],
+  ['Technician', 'technician@fieldline.com'],
+  ['Supervisor', 'supervisor@fieldline.com'],
+  ['Client', 'client@abc.com']
 ];
 
 export default function LandingPage() {

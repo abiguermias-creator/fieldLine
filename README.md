@@ -6,6 +6,28 @@ Fieldline is a full-stack field-service management system designed around the op
 
 The project combines a React web application with a TypeScript/Express API, PostgreSQL, Redis-backed background processing, and resilient external integrations.
 
+## Screenshots
+
+### Landing Page
+
+![Fieldline landing page](screenshots/landing-page.png)
+
+### Dashboard
+
+![Fieldline dashboard](screenshots/dashboard.png)
+
+### Dispatcher Board
+
+![Fieldline dispatcher board](screenshots/dispatcher-board.png)
+
+### Technician Day
+
+![Fieldline technician day](screenshots/technician-day.png)
+
+### Work Orders
+
+![Fieldline work orders](screenshots/work-orders.png)
+
 ## What Fieldline Does
 
 Fieldline connects the main roles involved in field operations:
@@ -202,6 +224,10 @@ WO-{year}-{4 digits}
 
 Assignments are checked against technician skills, certifications, availability, equipment conflicts, existing schedules, travel considerations, and operational constraints.
 
+## Live Demo
+
+**Live application:** https://field-line-web.vercel.app
+
 ## Demo Accounts
 
 The development seed creates demo accounts for the main Fieldline roles.
@@ -240,11 +266,15 @@ npm install
 
 ### Configure the API
 
-Create the required environment configuration for the API according to:
+Copy the example environment file and fill in the required values:
 
-```text
-docs/06-development-setup.md
+```powershell
+Copy-Item .\apps\api\.env.example .\apps\api\.env
 ```
+
+Then update `apps/api/.env` with your PostgreSQL, JWT, Redis, and other environment-specific values.
+
+The available environment variables and their expected format are documented in `apps/api/.env.example`.
 
 ### Generate the database client and apply migrations
 
@@ -369,11 +399,10 @@ Key architectural decisions are recorded in:
 docs/decisions.md
 ```
 
-Development setup instructions are available in:
+Environment configuration is documented in:
 
 ```text
-docs/06-development-setup.md
-```
+apps/api/.env.example
 
 ## Project Status
 
@@ -384,3 +413,13 @@ The project is actively being polished for professional review, including docume
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+```
+
+```
+
+```
+
+```
+
+```
