@@ -25,8 +25,7 @@ export default function DashboardDefault() {
       try {
         const data = await getWorkOrders();
         setWorkOrders(data.items || []);
-      } catch {
-      }
+      } catch {}
     }
 
     loadWorkOrders();
@@ -145,4 +144,3 @@ export default function DashboardDefault() {
     </Grid>
   );
 }
-

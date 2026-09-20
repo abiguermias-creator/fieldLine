@@ -25,8 +25,8 @@ import AnimateButton from 'components/@extended/AnimateButton';
 import { strengthColor, strengthIndicator } from 'utils/password-strength';
 
 // assets
-import { EyeOutlined } from "@ant-design/icons";
-import { EyeInvisibleOutlined } from "@ant-design/icons";
+import { EyeOutlined } from '@ant-design/icons';
+import { EyeInvisibleOutlined } from '@ant-design/icons';
 import { useAuth } from 'contexts/AuthContext';
 
 // ============================|| JWT - REGISTER ||============================ //
@@ -34,7 +34,7 @@ import { useAuth } from 'contexts/AuthContext';
 export default function AuthRegister() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
   const [level, setLevel] = useState();
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => {
@@ -57,32 +57,23 @@ export default function AuthRegister() {
   return (
     <>
       <Formik
-      onSubmit={async (values, { setSubmitting }) => {
+        onSubmit={async (values, { setSubmitting }) => {
+          try {
+            setErrorMessage('');
 
-  try {
+            await register({
+              email: values.email,
+              password: values.password,
+              fullName: `${values.firstname} ${values.lastname}`
+            });
 
-    setErrorMessage("");
-
-    await register({
-      email: values.email,
-      password: values.password,
-      fullName:
-        `${values.firstname} ${values.lastname}`
-    });
-
-navigate("/dashboard/default");
-  } catch(error) {
-
-    setErrorMessage(
-      error.response?.data?.message ??
-      "Registration failed"
-    );
-
-  }
-finally{
-setSubmitting(false);
-}
-}}
+            navigate('/dashboard/default');
+          } catch (error) {
+            setErrorMessage(error.response?.data?.message ?? 'Registration failed');
+          } finally {
+            setSubmitting(false);
+          }
+        }}
         initialValues={{
           firstname: '',
           lastname: '',
@@ -249,41 +240,29 @@ setSubmitting(false);
                 </Typography>
               </Grid>
               {errorMessage && (
-  <Grid size={12}>
-    <FormHelperText error>
-      {errorMessage}
-    </FormHelperText>
-  </Grid>
-)}
-          {errors.submit && (
-  <Grid size={12}>
-    <FormHelperText error>
-      {errors.submit}
-    </FormHelperText>
-  </Grid>
-)}
+                <Grid size={12}>
+                  <FormHelperText error>{errorMessage}</FormHelperText>
+                </Grid>
+              )}
+              {errors.submit && (
+                <Grid size={12}>
+                  <FormHelperText error>{errors.submit}</FormHelperText>
+                </Grid>
+              )}
 
-{errorMessage && (
-  <Grid size={12}>
-    <FormHelperText error>
-      {errorMessage}
-    </FormHelperText>
-  </Grid>
-)}
+              {errorMessage && (
+                <Grid size={12}>
+                  <FormHelperText error>{errorMessage}</FormHelperText>
+                </Grid>
+              )}
 
-<Grid size={12}>
-  <AnimateButton>
-    <Button
-      type="submit"
-      fullWidth
-      size="large"
-      variant="contained"
-      color="primary"
-    >
-      Create Account
-    </Button>
-  </AnimateButton>
-</Grid>
+              <Grid size={12}>
+                <AnimateButton>
+                  <Button type="submit" fullWidth size="large" variant="contained" color="primary">
+                    Create Account
+                  </Button>
+                </AnimateButton>
+              </Grid>
             </Grid>
           </form>
         )}

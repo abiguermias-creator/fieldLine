@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Grid, Stack, Typography } from '@mui/material';
 
 import { getWorkOrders, getAssignmentOptions, updateWorkOrder } from 'api/workOrder';
@@ -14,7 +14,7 @@ export default function DispatcherBoard() {
   const [assigning, setAssigning] = useState(null);
   const [error, setError] = useState('');
 
-  async function loadWorkOrders() {
+  const loadWorkOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -27,17 +27,17 @@ export default function DispatcherBoard() {
 
       const orders = data.items ?? data.workOrders ?? data;
 
-      if (orders?.length > 0 && !selectedWorkOrder) {
-        setSelectedWorkOrder(orders[0]);
+      if (orders?.length > 0) {
+        setSelectedWorkOrder((current) => current || orders[0]);
       }
     } catch (err) {
       setError(err.response?.data?.message ?? 'Failed to load work orders');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadAssignmentOptions(workOrder) {
+  const loadAssignmentOptions = useCallback(async (workOrder) => {
     try {
       setOptionsLoading(true);
       setError('');
@@ -51,17 +51,17 @@ export default function DispatcherBoard() {
     } finally {
       setOptionsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadWorkOrders();
-  }, []);
+  }, [loadWorkOrders]);
 
   useEffect(() => {
     if (selectedWorkOrder) {
       loadAssignmentOptions(selectedWorkOrder);
     }
-  }, [selectedWorkOrder]);
+  }, [selectedWorkOrder, loadAssignmentOptions]);
 
   async function handleAssign(technicianId) {
     if (!selectedWorkOrder) {

@@ -10,11 +10,7 @@ import Stack from '@mui/material/Stack';
 
 import MainCard from 'components/MainCard';
 
-import {
-  getSkills,
-  createSkill,
-  deleteSkill
-} from 'api/skills';
+import { getSkills, createSkill, deleteSkill } from 'api/skills';
 
 export default function Skills() {
   const [skills, setSkills] = useState([]);
@@ -31,9 +27,7 @@ export default function Skills() {
       const data = await getSkills();
       setSkills(data);
     } catch (error) {
-      setMessage(
-        error.response?.data?.message || 'Failed to load skills'
-      );
+      setMessage(error.response?.data?.message || 'Failed to load skills');
     }
   }
 
@@ -53,17 +47,11 @@ export default function Skills() {
       });
 
       loadSkills();
-    }  catch (error) {
+    } catch (error) {
+      const responseMessage = error.response?.data?.message;
 
-  const responseMessage = error.response?.data?.message;
-
-  setMessage(
-    responseMessage ||
-    error.response?.data?.error ||
-    error.message ||
-    'Failed to create skill'
-  );
-}
+      setMessage(responseMessage || error.response?.data?.error || error.message || 'Failed to create skill');
+    }
   }
 
   async function handleDeleteSkill(id) {
@@ -74,11 +62,7 @@ export default function Skills() {
 
       loadSkills();
     } catch (error) {
-
-      setMessage(
-        error.response?.data?.message ||
-        'Failed to delete skill'
-      );
+      setMessage(error.response?.data?.message || 'Failed to delete skill');
     }
   }
 
@@ -111,18 +95,11 @@ export default function Skills() {
           }
         />
 
-        <Button
-          variant="contained"
-          onClick={handleCreateSkill}
-        >
+        <Button variant="contained" onClick={handleCreateSkill}>
           Create Skill
         </Button>
 
-        {message && (
-          <Typography>
-            {message}
-          </Typography>
-        )}
+        {message && <Typography>{message}</Typography>}
       </Stack>
 
       <List>
@@ -132,19 +109,10 @@ export default function Skills() {
           </ListItem>
         ) : (
           skills.map((skill) => (
-            <ListItem
-              key={skill.id}
-              divider
-            >
-              <ListItemText
-                primary={skill.name}
-                secondary={`Code: ${skill.code}`}
-              />
+            <ListItem key={skill.id} divider>
+              <ListItemText primary={skill.name} secondary={`Code: ${skill.code}`} />
 
-              <Button
-                color="error"
-                onClick={() => handleDeleteSkill(skill.id)}
-              >
+              <Button color="error" onClick={() => handleDeleteSkill(skill.id)}>
                 Delete
               </Button>
             </ListItem>

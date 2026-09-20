@@ -6,7 +6,6 @@ import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import { requestIdMiddleware } from "./middleware/requestId.js";
-import testRoutes from "./test/test.routes.js";
 import protectedRoutes from "./auth/protected.routes.js";
 import workOrderRoutes from "./work-orders/work-order.routes.js";
 import clientRoutes from "./clients/client.routes.js";
@@ -78,7 +77,6 @@ export function createApp() {
 
   app.get("/health", healthHandler);
   app.use("/api/auth", authRoutes);
-  app.use("/api/test", testRoutes);
   app.use("/api/work-orders", workOrderRoutes);
   app.use("/api/clients", clientRoutes);
   app.use("/api/sites", siteRoutes);

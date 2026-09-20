@@ -83,8 +83,10 @@ export default [
     }
   },
   {
-    ignores: ['node_modules/**'],
-    files: ['src/**/*.{js,jsx}']
-  }
+  ignores: ['node_modules/**', 'dist/**']
+},
+{
+  files: ['src/**/*.{js,jsx}']
+}
 ];
 

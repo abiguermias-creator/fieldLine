@@ -21,8 +21,7 @@ export function useLocalStorage(key, defaultValue) {
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state));
-    } catch {
-    }
+    } catch {}
   }, [key, state]);
 
   // Update single field
@@ -41,5 +40,3 @@ export function useLocalStorage(key, defaultValue) {
 
   return { state, setState, setField, resetState };
 }
-
-

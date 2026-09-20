@@ -15,16 +15,13 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-
 import MainCard from 'components/MainCard';
 import IconButton from 'components/@extended/IconButton';
 import Transitions from 'components/@extended/Transitions';
 import { api } from 'api/client';
 
-
 import { BellOutlined } from '@ant-design/icons';
 import { CheckCircleOutlined } from '@ant-design/icons';
-
 
 const avatarSX = {
   width: 36,
@@ -42,26 +39,24 @@ const actionSX = {
   transform: 'none'
 };
 
-
 export default function Notification() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
   const anchorRef = useRef(null);
- const [notifications, setNotifications] = useState([]);
-const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [open, setOpen] = useState(false);
 
-useEffect(() => {
-  async function loadNotifications() {
-    try {
-      const response = await api.get('/notifications');
-      setNotifications(response.data);
-    } catch {
+  useEffect(() => {
+    async function loadNotifications() {
+      try {
+        const response = await api.get('/notifications');
+        setNotifications(response.data);
+      } catch {}
     }
-  }
 
-  loadNotifications();
-}, []);
-const unreadCount = notifications.length;
+    loadNotifications();
+  }, []);
+  const unreadCount = notifications.length;
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -136,56 +131,40 @@ const unreadCount = notifications.length;
                     }}
                   >
                     {notifications.length === 0 ? (
-  <ListItem>
-    <ListItemText
-      primary="No notifications"
-      secondary="You're all caught up."
-    />
-  </ListItem>
-) : (
-  notifications.map((notification) => (
-    <ListItem
-      key={notification.id}
-      divider
-    >
-      <ListItemAvatar>
-        <Avatar
-          sx={{
-            color: 'primary.main',
-            bgcolor: 'primary.lighter'
-          }}
-        >
-          <BellOutlined />
-        </Avatar>
-      </ListItemAvatar>
+                      <ListItem>
+                        <ListItemText primary="No notifications" secondary="You're all caught up." />
+                      </ListItem>
+                    ) : (
+                      notifications.map((notification) => (
+                        <ListItem key={notification.id} divider>
+                          <ListItemAvatar>
+                            <Avatar
+                              sx={{
+                                color: 'primary.main',
+                                bgcolor: 'primary.lighter'
+                              }}
+                            >
+                              <BellOutlined />
+                            </Avatar>
+                          </ListItemAvatar>
 
-      <ListItemText
-        primary={
-          <Typography variant="h6">
-            {notification.title}
-          </Typography>
-        }
-        secondary={notification.message}
-      />
+                          <ListItemText
+                            primary={<Typography variant="h6">{notification.title}</Typography>}
+                            secondary={notification.message}
+                          />
 
-      <Typography
-        variant="caption"
-        noWrap
-        sx={{ ml: 1 }}
-      >
-        {notification.createdAt
-          ? new Date(
-              notification.createdAt
-            ).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          : ''}
-      </Typography>
-    </ListItem>
-  ))
-)}
-</List>
+                          <Typography variant="caption" noWrap sx={{ ml: 1 }}>
+                            {notification.createdAt
+                              ? new Date(notification.createdAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : ''}
+                          </Typography>
+                        </ListItem>
+                      ))
+                    )}
+                  </List>
                 </MainCard>
               </ClickAwayListener>
             </Paper>
@@ -195,4 +174,3 @@ const unreadCount = notifications.length;
     </Box>
   );
 }
-

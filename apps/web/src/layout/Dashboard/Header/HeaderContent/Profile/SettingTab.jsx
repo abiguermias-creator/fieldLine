@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 
 // material-ui
 import List from '@mui/material/List';
-import Link from '@mui/material/Link';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Switch from '@mui/material/Switch';
 
 // assets
-import { CommentOutlined, LockOutlined, QuestionCircleOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
 import { getMyDay, updateMyLocationSharing } from 'api/technicians';
 import { useAuth } from 'contexts/AuthContext';
@@ -32,8 +31,7 @@ export default function SettingTab() {
       try {
         const data = await getMyDay();
         setLocationSharing(Boolean(data?.technician?.locationSharingEnabled));
-      } catch {
-      }
+      } catch {}
     }
 
     loadLocationSharing();
@@ -56,15 +54,6 @@ export default function SettingTab() {
 
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
-      <Link underline="none" sx={{ color: 'inherit' }} target="_blank" href="https://codedthemes.support-hub.io/">
-        <ListItemButton>
-          <ListItemIcon>
-            <QuestionCircleOutlined />
-          </ListItemIcon>
-          <ListItemText primary="Support" />
-        </ListItemButton>
-      </Link>
-
       {isTechnician && (
         <ListItemButton>
           <ListItemIcon>
@@ -90,16 +79,6 @@ export default function SettingTab() {
         </ListItemIcon>
         <ListItemText primary="Privacy Center" />
       </ListItemButton>
-
-      <Link underline="none" style={{ color: 'inherit' }} target="_blank" href="https://codedthemes.support-hub.io/">
-        <ListItemButton>
-          <ListItemIcon>
-            <CommentOutlined />
-          </ListItemIcon>
-          <ListItemText primary="Feedback" />
-        </ListItemButton>
-      </Link>
     </List>
   );
 }
-

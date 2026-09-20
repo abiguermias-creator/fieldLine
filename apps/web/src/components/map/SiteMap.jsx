@@ -21,10 +21,7 @@ function MapCenter({ sites }) {
       return;
     }
 
-    map.setView(
-      [Number(firstSite.latitude), Number(firstSite.longitude)],
-      13
-    );
+    map.setView([Number(firstSite.latitude), Number(firstSite.longitude)], 13);
   }, [map, sites]);
 
   return null;
